@@ -1,0 +1,2550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jainam Change Management Portal</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Aptos:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --primary: #1a3a6b;
+    --primary-light: #2556a0;
+    --primary-dark: #0f2347;
+    --accent: #d4a017;
+    --accent-light: #f0c040;
+    --danger: #c0392b;
+    --success: #1e8449;
+    --warning: #e67e22;
+    --info: #2471a3;
+    --bg: #ffffff;
+    --bg-soft: #f4f6fa;
+    --bg-card: #ffffff;
+    --border: #d0d8e8;
+    --border-light: #e8edf5;
+    --text: #1a1a2e;
+    --text-muted: #6b7a99;
+    --text-light: #8fa0bb;
+    --shadow: 0 2px 12px rgba(26,58,107,0.08);
+    --shadow-lg: 0 8px 32px rgba(26,58,107,0.14);
+    --radius: 8px;
+    --radius-lg: 12px;
+    --sidebar-w: 240px;
+    --header-h: 64px;
+    --font: 'Aptos', 'Segoe UI', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg-soft);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ─── HEADER ─── */
+  #header {
+    position: fixed; top: 0; left: 0; right: 0; height: var(--header-h);
+    background: var(--primary-dark);
+    display: flex; align-items: center; gap: 16px;
+    padding: 0 24px;
+    z-index: 1000;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.25);
+  }
+  #header .logo {
+    display: flex; align-items: center; gap: 12px;
+    text-decoration: none;
+  }
+  #header .logo-icon {
+    width: 38px; height: 38px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: var(--primary-dark);
+  }
+  #header .logo-text { color: #fff; }
+  #header .logo-text strong { font-size: 15px; font-weight: 700; display: block; letter-spacing: 0.3px; }
+  #header .logo-text span { font-size: 10px; color: rgba(255,255,255,0.55); letter-spacing: 1px; text-transform: uppercase; }
+  #header .hdr-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  #header .hdr-date { color: rgba(255,255,255,0.6); font-size: 12px; }
+  #header .hdr-btn {
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+    color: #fff; padding: 6px 14px; border-radius: 6px; cursor: pointer;
+    font-family: var(--font); font-size: 12px; transition: all 0.2s;
+  }
+  #header .hdr-btn:hover { background: rgba(255,255,255,0.2); }
+  #header .hdr-btn.accent { background: var(--accent); color: var(--primary-dark); border-color: var(--accent); font-weight: 600; }
+  #header .hdr-btn.accent:hover { background: var(--accent-light); }
+  #file-status { font-size: 11px; color: rgba(255,255,255,0.5); }
+  #file-status.loaded { color: #4caf7d; }
+
+  /* ─── SIDEBAR ─── */
+  #sidebar {
+    position: fixed; top: var(--header-h); left: 0; bottom: 0;
+    width: var(--sidebar-w); background: var(--primary);
+    padding: 20px 0; overflow-y: auto; z-index: 900;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.15);
+  }
+  .nav-section { padding: 0 12px; margin-bottom: 4px; }
+  .nav-section-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 1.2px;
+    text-transform: uppercase; color: rgba(255,255,255,0.35);
+    padding: 8px 12px 6px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: 7px; cursor: pointer;
+    color: rgba(255,255,255,0.7); transition: all 0.18s;
+    font-size: 13px; font-weight: 500; margin-bottom: 2px;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  .nav-item.active { background: rgba(255,255,255,0.18); color: #fff; }
+  .nav-item .nav-icon { font-size: 15px; width: 20px; text-align: center; }
+  .nav-badge {
+    margin-left: auto; background: var(--accent);
+    color: var(--primary-dark); font-size: 10px; font-weight: 700;
+    padding: 2px 6px; border-radius: 10px; min-width: 20px; text-align: center;
+  }
+
+  /* ─── MAIN ─── */
+  #main {
+    margin-left: var(--sidebar-w);
+    margin-top: var(--header-h);
+    padding: 24px;
+    min-height: calc(100vh - var(--header-h));
+  }
+
+  /* ─── PAGES ─── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ─── PAGE HEADER ─── */
+  .page-hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+  }
+  .page-hdr h1 { font-size: 22px; font-weight: 700; color: var(--primary-dark); }
+  .page-hdr p { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .page-hdr .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* ─── CARDS ─── */
+  .card {
+    background: var(--bg-card); border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg); padding: 20px;
+    box-shadow: var(--shadow); margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 13px; font-weight: 700; color: var(--primary);
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px;
+    padding-bottom: 10px; border-bottom: 2px solid var(--border-light);
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* ─── KPI GRID ─── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px; margin-bottom: 24px;
+  }
+  .kpi-card {
+    background: var(--bg-card); border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg); padding: 18px 20px;
+    box-shadow: var(--shadow); position: relative; overflow: hidden;
+    cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .kpi-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 3px; background: var(--kpi-color, var(--primary));
+  }
+  .kpi-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .kpi-value { font-size: 28px; font-weight: 700; color: var(--text); line-height: 1; }
+  .kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+  .kpi-icon { position: absolute; right: 16px; top: 16px; font-size: 22px; opacity: 0.12; }
+
+  /* ─── TABLE ─── */
+  .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border-light); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    background: var(--primary-dark); color: #fff;
+    padding: 10px 12px; font-weight: 600; text-align: left;
+    font-size: 11px; letter-spacing: 0.4px; text-transform: uppercase;
+    white-space: nowrap; cursor: pointer; user-select: none;
+  }
+  thead th:hover { background: var(--primary); }
+  thead th .sort-arrow { opacity: 0.4; font-size: 9px; }
+  thead th.sorted-asc .sort-arrow::after { content: ' ▲'; opacity: 1; }
+  thead th.sorted-desc .sort-arrow::after { content: ' ▼'; opacity: 1; }
+  tbody tr { border-bottom: 1px solid var(--border-light); transition: background 0.12s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #f0f4fb; }
+  tbody td { padding: 10px 12px; vertical-align: middle; }
+  .rfc-num { font-weight: 700; color: var(--primary); font-family: monospace; }
+  .change-title { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .change-title:hover { white-space: normal; }
+
+  /* ─── STATUS BADGES ─── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 9px; border-radius: 20px; font-size: 11px;
+    font-weight: 600; white-space: nowrap;
+  }
+  .badge-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .badge-green { background: #e8f5ee; color: #1e8449; }
+  .badge-green .badge-dot { background: #1e8449; }
+  .badge-blue { background: #e8f0fb; color: #1a56c4; }
+  .badge-blue .badge-dot { background: #1a56c4; }
+  .badge-orange { background: #fff3e0; color: #e65100; }
+  .badge-orange .badge-dot { background: #e65100; }
+  .badge-red { background: #fdecea; color: #c0392b; }
+  .badge-red .badge-dot { background: #c0392b; }
+  .badge-gray { background: #f0f2f5; color: #6b7a99; }
+  .badge-gray .badge-dot { background: #6b7a99; }
+  .badge-gold { background: #fff9e6; color: #b8860b; }
+  .badge-gold .badge-dot { background: #b8860b; }
+  .badge-purple { background: #f3e8ff; color: #6a0dad; }
+  .badge-purple .badge-dot { background: #6a0dad; }
+
+  /* ─── BUTTONS ─── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 7px; font-family: var(--font);
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    border: none; transition: all 0.18s; white-space: nowrap;
+  }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-light); }
+  .btn-accent { background: var(--accent); color: var(--primary-dark); }
+  .btn-accent:hover { background: var(--accent-light); }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-success:hover { background: #165f34; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #a02419; }
+  .btn-outline {
+    background: transparent; color: var(--primary);
+    border: 1.5px solid var(--primary);
+  }
+  .btn-outline:hover { background: var(--primary); color: #fff; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-xs { padding: 3px 8px; font-size: 11px; }
+  .btn-icon { padding: 7px; }
+
+  /* ─── FORMS ─── */
+  .form-grid { display: grid; gap: 16px; }
+  .form-grid-2 { grid-template-columns: 1fr 1fr; }
+  .form-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-label {
+    font-size: 12px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .form-label .req { color: var(--danger); }
+  .form-control {
+    padding: 9px 12px; border: 1.5px solid var(--border);
+    border-radius: var(--radius); font-family: var(--font);
+    font-size: 13px; color: var(--text); background: var(--bg);
+    transition: border-color 0.18s, box-shadow 0.18s;
+    width: 100%;
+  }
+  .form-control:focus {
+    outline: none; border-color: var(--primary-light);
+    box-shadow: 0 0 0 3px rgba(37,86,160,0.1);
+  }
+  select.form-control { cursor: pointer; }
+  textarea.form-control { min-height: 80px; resize: vertical; }
+
+  /* ─── SEARCH / FILTER BAR ─── */
+  .filter-bar {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    align-items: center; margin-bottom: 16px;
+  }
+  .filter-bar .form-control { max-width: 200px; padding: 7px 12px; }
+  .search-wrap { position: relative; flex: 1; max-width: 340px; }
+  .search-wrap .form-control { padding-left: 34px; }
+  .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 14px; pointer-events: none; }
+
+  /* ─── MODAL ─── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(10,20,50,0.5); z-index: 2000;
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg-card); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg); width: 100%; max-width: 720px;
+    max-height: 90vh; overflow-y: auto; animation: modalIn 0.2s ease;
+  }
+  .modal-lg { max-width: 900px; }
+  .modal-xl { max-width: 1100px; }
+  @keyframes modalIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+  .modal-header {
+    padding: 18px 24px; border-bottom: 1px solid var(--border-light);
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; background: var(--bg-card); z-index: 1;
+  }
+  .modal-header h2 { font-size: 16px; font-weight: 700; color: var(--primary-dark); }
+  .modal-body { padding: 24px; }
+  .modal-footer {
+    padding: 16px 24px; border-top: 1px solid var(--border-light);
+    display: flex; gap: 10px; justify-content: flex-end;
+    position: sticky; bottom: 0; background: var(--bg-card);
+  }
+  .modal-close {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-muted); font-size: 20px; line-height: 1;
+    padding: 4px; border-radius: 4px; transition: color 0.15s;
+  }
+  .modal-close:hover { color: var(--danger); }
+
+  /* ─── TABS ─── */
+  .tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border-light); margin-bottom: 20px; }
+  .tab-btn {
+    padding: 10px 18px; background: none; border: none;
+    font-family: var(--font); font-size: 13px; font-weight: 600;
+    color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent;
+    margin-bottom: -2px; transition: all 0.18s;
+  }
+  .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+  .tab-btn:hover { color: var(--primary); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ─── PAGINATION ─── */
+  .pagination {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border-top: 1px solid var(--border-light);
+    font-size: 13px; color: var(--text-muted);
+  }
+  .page-btns { display: flex; gap: 4px; }
+  .page-btn {
+    padding: 5px 10px; border: 1px solid var(--border); border-radius: 5px;
+    background: #fff; cursor: pointer; font-size: 12px; font-weight: 600;
+    color: var(--text); transition: all 0.15s;
+  }
+  .page-btn:hover, .page-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ─── TIMELINE ─── */
+  .timeline { position: relative; padding-left: 28px; }
+  .timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: var(--border-light); }
+  .timeline-item { position: relative; margin-bottom: 18px; }
+  .timeline-dot { position: absolute; left: -24px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--primary); border: 2px solid #fff; box-shadow: 0 0 0 2px var(--primary); }
+  .timeline-content { background: var(--bg-soft); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 12px 14px; }
+  .timeline-time { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+  .timeline-text { font-size: 13px; font-weight: 500; }
+
+  /* ─── UTILITIES ─── */
+  .text-center { text-align: center; }
+  .text-muted { color: var(--text-muted); }
+  .fw-700 { font-weight: 700; }
+  .mt-8 { margin-top: 8px; }
+  .mt-16 { margin-top: 16px; }
+  .mt-24 { margin-top: 24px; }
+  .gap-8 { gap: 8px; }
+  .flex { display: flex; }
+  .flex-center { display: flex; align-items: center; }
+  .flex-between { display: flex; align-items: center; justify-content: space-between; }
+  .divider { border: none; border-top: 1px solid var(--border-light); margin: 16px 0; }
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--text-muted); }
+  .empty-state .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: var(--bg-soft); color: var(--text-muted); border: 1px solid var(--border-light); }
+  .info-row { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 12px; }
+  .info-item { flex: 1; min-width: 140px; }
+  .info-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 3px; }
+  .info-value { font-size: 14px; font-weight: 600; color: var(--text); }
+  .progress-bar { height: 6px; background: var(--border-light); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; background: var(--primary); transition: width 0.4s; }
+  .tooltip { position: relative; }
+  .tooltip:hover::after {
+    content: attr(data-tip); position: absolute; bottom: calc(100% + 6px); left: 50%;
+    transform: translateX(-50%); background: #222; color: #fff; font-size: 11px;
+    padding: 4px 8px; border-radius: 4px; white-space: nowrap; z-index: 100;
+  }
+
+  /* ─── EMAIL COMPOSER ─── */
+  #emailPreview {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px; background: #fff; font-size: 13px; line-height: 1.7;
+    min-height: 300px; font-family: var(--font);
+    white-space: pre-wrap;
+  }
+  .email-field { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; }
+  .email-field-label { font-size: 12px; font-weight: 700; color: var(--text-muted); width: 50px; padding-top: 9px; }
+
+  /* ─── SETTINGS ─── */
+  .settings-list { list-style: none; }
+  .settings-list li {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px; border-radius: var(--radius);
+    border: 1px solid var(--border-light); margin-bottom: 6px;
+    background: var(--bg-soft);
+  }
+  .settings-list li .item-name { font-weight: 600; font-size: 13px; }
+  .settings-list li .item-actions { display: flex; gap: 6px; }
+
+  /* ─── CHART MINI ─── */
+  .mini-bar-chart { display: flex; flex-direction: column; gap: 8px; }
+  .mini-bar-row { display: flex; align-items: center; gap: 10px; }
+  .mini-bar-label { font-size: 12px; color: var(--text-muted); width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mini-bar-track { flex: 1; height: 20px; background: var(--bg-soft); border-radius: 4px; overflow: hidden; border: 1px solid var(--border-light); }
+  .mini-bar-fill { height: 100%; background: var(--primary); border-radius: 4px; transition: width 0.5s ease; display: flex; align-items: center; padding: 0 6px; }
+  .mini-bar-fill span { font-size: 11px; color: #fff; font-weight: 600; }
+  .mini-bar-count { font-size: 12px; font-weight: 700; color: var(--text); width: 24px; text-align: right; }
+
+  /* ─── TOAST ─── */
+  #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    background: var(--primary-dark); color: #fff; padding: 12px 18px;
+    border-radius: 8px; font-size: 13px; font-weight: 500;
+    box-shadow: var(--shadow-lg); animation: toastIn 0.25s ease;
+    display: flex; align-items: center; gap: 10px; min-width: 240px;
+    border-left: 4px solid var(--accent);
+  }
+  .toast.success { border-left-color: var(--success); }
+  .toast.error { border-left-color: var(--danger); }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: none; } }
+
+  /* ─── PRINT ─── */
+  @media print {
+    #header, #sidebar, .page-hdr .actions, .filter-bar { display: none !important; }
+    #main { margin: 0; padding: 10px; }
+    .modal-overlay { display: none !important; }
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 900px) {
+    #sidebar { width: 56px; }
+    .nav-item span, .nav-section-label, .nav-badge { display: none; }
+    #main { margin-left: 56px; }
+    .form-grid-3 { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 600px) {
+    #main { padding: 14px; }
+    .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ░░ HEADER ░░ -->
+<div id="header">
+  <div class="logo">
+    <div class="logo-icon">J</div>
+    <div class="logo-text">
+      <strong>Jainam Change Management Portal</strong>
+      <span>RFC Tracking &amp; Governance System</span>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <span id="eodStatus" style="font-size:11px;color:rgba(255,255,255,0.45);cursor:pointer;" onclick="sendEODNow()" title="Click to preview today's report now">⏰ —</span>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;">
+      <span id="file-status" style="font-size:11px;color:rgba(255,255,255,0.5);">No data source</span>
+      <span id="sync-status" style="font-size:10px;color:rgba(255,255,255,0.35);"></span>
+    </div>
+    <span class="hdr-date" id="hdr-date"></span>
+    <button class="btn hdr-btn" id="syncBtn" onclick="syncFromOneDrive()" title="Fetch latest data from OneDrive">☁ Sync OneDrive</button>
+    <label class="btn hdr-btn" style="cursor:pointer;" title="Load a local XLS file">
+      📂 Load Local XLS
+      <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none" onchange="loadFile(this)">
+    </label>
+    <button class="btn hdr-btn accent" onclick="exportXLS()">⬇ Save XLS</button>
+    <button class="btn hdr-btn" onclick="createBackup()">🔒 Backup</button>
+  </div>
+</div>
+
+<!-- ░░ SIDEBAR ░░ -->
+<div id="sidebar">
+  <div class="nav-section-label" style="padding-left:16px;margin-top:4px;">Main</div>
+  <div class="nav-section">
+    <div class="nav-item active" onclick="navigate('dashboard')">
+      <span class="nav-icon">📊</span><span>Dashboard</span>
+    </div>
+    <div class="nav-item" onclick="navigate('rfcList')">
+      <span class="nav-icon">📋</span><span>RFC Register</span>
+      <span class="nav-badge" id="nav-badge-rfc">0</span>
+    </div>
+    <div class="nav-item" onclick="navigate('newRFC')">
+      <span class="nav-icon">➕</span><span>New RFC</span>
+    </div>
+    <div class="nav-item" onclick="navigate('cabMeeting')">
+      <span class="nav-icon">🏛</span><span>CAB Meeting</span>
+      <span class="nav-badge" id="nav-badge-cab" style="background:#e67e22;color:#fff">0</span>
+    </div>
+  </div>
+  <div class="nav-section-label" style="padding-left:16px;margin-top:12px;">Management</div>
+  <div class="nav-section">
+    <div class="nav-item" onclick="navigate('reporting')">
+      <span class="nav-icon">📧</span><span>Reports &amp; Email</span>
+    </div>
+    <div class="nav-item" onclick="navigate('analytics')">
+      <span class="nav-icon">📈</span><span>Analytics</span>
+    </div>
+  </div>
+  <div class="nav-section-label" style="padding-left:16px;margin-top:12px;">Config</div>
+  <div class="nav-section">
+    <div class="nav-item" onclick="navigate('settings')">
+      <span class="nav-icon">⚙️</span><span>Settings</span>
+    </div>
+  </div>
+</div>
+
+<!-- ░░ MAIN ░░ -->
+<div id="main">
+
+  <!-- ══ DASHBOARD ══ -->
+  <div id="page-dashboard" class="page active">
+    <div class="page-hdr">
+      <div>
+        <h1>📊 Dashboard</h1>
+        <p>Executive overview of all change requests</p>
+      </div>
+      <div class="actions">
+        <button class="btn btn-outline btn-sm" onclick="refreshDashboard()">🔄 Refresh</button>
+        <button class="btn btn-primary btn-sm" onclick="navigate('newRFC')">+ New RFC</button>
+      </div>
+    </div>
+
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+      <div class="card">
+        <div class="card-title">🟢 Status Distribution</div>
+        <div class="mini-bar-chart" id="statusChart"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔷 Change Type Breakdown</div>
+        <div class="mini-bar-chart" id="typeChart"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⏳ Pending CAB Discussion <span class="badge badge-orange" id="cabCount" style="margin-left:8px"></span></div>
+      <div class="table-wrap">
+        <table id="pendingTable">
+          <thead><tr>
+            <th>RFC #</th><th>Change Title</th><th>Type</th>
+            <th>Requester</th><th>Category</th><th>Received</th><th>Action</th>
+          </tr></thead>
+          <tbody id="pendingBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ RFC LIST ══ -->
+  <div id="page-rfcList" class="page">
+    <div class="page-hdr">
+      <div>
+        <h1>📋 RFC Register</h1>
+        <p>All change requests — filter, search and manage</p>
+      </div>
+      <div class="actions">
+        <button class="btn btn-accent btn-sm" onclick="navigate('newRFC')">+ New RFC</button>
+        <button class="btn btn-outline btn-sm" onclick="exportXLS()">⬇ Export XLS</button>
+        <button class="btn btn-outline btn-sm" onclick="printPage()">🖨 Print</button>
+      </div>
+    </div>
+    <div class="card" style="padding:16px;margin-bottom:16px;">
+      <div class="filter-bar">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="form-control" id="searchInput" placeholder="Search RFC, title, requester…" oninput="applyFilters()">
+        </div>
+        <select class="form-control" id="filterStatus" onchange="applyFilters()">
+          <option value="">All Statuses</option>
+        </select>
+        <select class="form-control" id="filterType" onchange="applyFilters()">
+          <option value="">All Types</option>
+        </select>
+        <select class="form-control" id="filterCategory" onchange="applyFilters()">
+          <option value="">All Categories</option>
+        </select>
+        <select class="form-control" id="filterVAPT" onchange="applyFilters()">
+          <option value="">All VAPT</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="clearFilters()">✕ Clear</button>
+        <span id="filterCount" class="text-muted" style="font-size:12px;white-space:nowrap;"></span>
+      </div>
+    </div>
+    <div class="card" style="padding:0;">
+      <div class="table-wrap">
+        <table id="rfcTable">
+          <thead><tr>
+            <th onclick="sortTable('RFC Number')" class="sorted-desc">RFC # <span class="sort-arrow"></span></th>
+            <th onclick="sortTable('Infra / Application')">Category <span class="sort-arrow"></span></th>
+            <th onclick="sortTable('Change Title')">Change Title <span class="sort-arrow"></span></th>
+            <th onclick="sortTable('Change Type')">Type <span class="sort-arrow"></span></th>
+            <th onclick="sortTable('Requester Name')">Requester <span class="sort-arrow"></span></th>
+            <th onclick="sortTable('Status')">Status <span class="sort-arrow"></span></th>
+            <th onclick="sortTable('Received Date')">Received <span class="sort-arrow"></span></th>
+            <th onclick="sortTable('Start Date')">Start <span class="sort-arrow"></span></th>
+            <th onclick="sortTable('End Date')">End <span class="sort-arrow"></span></th>
+            <th>VAPT</th>
+            <th>Approval</th>
+            <th style="width:90px;">Actions</th>
+          </tr></thead>
+          <tbody id="rfcBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <span id="paginationInfo"></span>
+        <div class="page-btns" id="pageButtons"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ NEW RFC ══ -->
+  <div id="page-newRFC" class="page">
+    <div class="page-hdr">
+      <div>
+        <h1>➕ New RFC</h1>
+        <p>Submit a new Request for Change</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="form-grid form-grid-2">
+        <div class="form-group">
+          <label class="form-label">RFC Number <span class="req">*</span></label>
+          <input type="text" class="form-control" id="new_rfcNum" placeholder="e.g. RFC-2335" oninput="validateNewRFCNum(this)">
+          <div id="new_rfcNum_msg" style="font-size:11px;margin-top:3px;"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Received Date <span class="req">*</span></label>
+          <input type="date" class="form-control" id="new_receivedDate">
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Change Title <span class="req">*</span></label>
+          <textarea class="form-control" id="new_title" rows="3" placeholder="Describe the change in detail…"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category <span class="req">*</span></label>
+          <select class="form-control" id="new_category"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Change Type <span class="req">*</span></label>
+          <select class="form-control" id="new_changeType"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Requester Name <span class="req">*</span></label>
+          <input type="text" class="form-control" id="new_requester" list="requesterList" placeholder="Type or select requester…" autocomplete="off">
+          <datalist id="requesterList"></datalist>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status <span class="req">*</span></label>
+          <select class="form-control" id="new_status" onchange="autoFillEndDate('new')"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Start Date</label>
+          <input type="date" class="form-control" id="new_startDate">
+        </div>
+        <div class="form-group">
+          <label class="form-label">End Date</label>
+          <input type="date" class="form-control" id="new_endDate">
+        </div>
+        <div class="form-group">
+          <label class="form-label">VAPT Status</label>
+          <select class="form-control" id="new_vapt"></select>
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Approval &amp; Artifacts Received Status</label>
+          <select class="form-control" id="new_approval"></select>
+        </div>
+      </div>
+      <hr class="divider">
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="clearNewRFCForm()">🗑 Clear</button>
+        <button class="btn btn-primary" onclick="saveNewRFC()">💾 Save RFC</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CAB MEETING ══ -->
+  <div id="page-cabMeeting" class="page">
+    <div class="page-hdr">
+      <div>
+        <h1>🏛 CAB Meeting</h1>
+        <p>Change Advisory Board — items pending discussion and decision</p>
+      </div>
+      <div class="actions">
+        <button class="btn btn-accent btn-sm" onclick="openBulkDecision()">⚡ Bulk Decision</button>
+        <button class="btn btn-primary btn-sm" onclick="exportCABReport()">📄 CAB Report</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📌 Pending CAB Agenda</div>
+      <div class="table-wrap">
+        <table id="cabTable">
+          <thead><tr>
+            <th><input type="checkbox" id="cabSelectAll" onchange="toggleCABSelectAll(this)"></th>
+            <th>RFC #</th><th>Change Title</th><th>Category</th>
+            <th>Type</th><th>Requester</th><th>Received</th><th>Decision</th>
+          </tr></thead>
+          <tbody id="cabBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ REPORTING ══ -->
+  <div id="page-reporting" class="page">
+    <div class="page-hdr">
+      <div>
+        <h1>📧 Reports &amp; Email</h1>
+        <p>Generate stakeholder communications and status reports</p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:flex-start;">
+      <div>
+        <div class="card">
+          <div class="card-title">📝 Email Configuration</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Report Type</label>
+              <select class="form-control" id="rpt_type" onchange="buildEmailPreview()">
+                <option value="cab">CAB Meeting Summary</option>
+                <option value="status">RFC Status Update</option>
+                <option value="pending">Pending Approvals</option>
+                <option value="weekly">Weekly Change Summary</option>
+                <option value="hod">HOD Approval Request</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">To (Stakeholder)</label>
+              <select class="form-control" id="rpt_to" onchange="buildEmailPreview()">
+                <option value="">-- Select Recipient --</option>
+                <option value="management">Senior Management</option>
+                <option value="cab">CAB Members</option>
+                <option value="it">IT Team</option>
+                <option value="all">All Stakeholders</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Custom To Email(s)</label>
+              <input type="text" class="form-control" id="rpt_toEmail" placeholder="email@jainam.in; email2@…" oninput="buildEmailPreview()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">CC</label>
+              <input type="text" class="form-control" id="rpt_cc" placeholder="cc@jainam.in" oninput="buildEmailPreview()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Filter by Status</label>
+              <select class="form-control" id="rpt_statusFilter" onchange="buildEmailPreview()">
+                <option value="">All</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Include date range</label>
+              <div style="display:flex;gap:6px;">
+                <input type="date" class="form-control" id="rpt_from" oninput="buildEmailPreview()">
+                <input type="date" class="form-control" id="rpt_to_date" oninput="buildEmailPreview()">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Additional Notes</label>
+              <textarea class="form-control" id="rpt_notes" rows="3" placeholder="Any specific notes to include…" oninput="buildEmailPreview()"></textarea>
+            </div>
+          </div>
+          <hr class="divider">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="buildEmailPreview()">🔄 Generate</button>
+            <button class="btn btn-success" onclick="copyEmail()">📋 Copy Email</button>
+            <button class="btn btn-outline" onclick="printEmail()">🖨 Print</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📬 Email Preview</div>
+        <div class="email-field">
+          <div class="email-field-label">To:</div>
+          <div id="emailTo" style="font-size:13px;padding:8px 0;color:var(--primary);font-weight:600;"></div>
+        </div>
+        <div class="email-field">
+          <div class="email-field-label">CC:</div>
+          <div id="emailCC" style="font-size:13px;padding:8px 0;color:var(--text-muted);"></div>
+        </div>
+        <div class="email-field">
+          <div class="email-field-label">Subject:</div>
+          <div id="emailSubject" style="font-size:13px;padding:8px 0;font-weight:700;"></div>
+        </div>
+        <hr class="divider">
+        <div id="emailPreview">Generate a report to preview the email here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ANALYTICS ══ -->
+  <div id="page-analytics" class="page">
+    <div class="page-hdr">
+      <div><h1>📈 Analytics</h1><p>Detailed analysis and trends</p></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <div class="card">
+        <div class="card-title">👤 Top Requesters</div>
+        <div class="mini-bar-chart" id="requesterChart"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🗂 By Category</div>
+        <div class="mini-bar-chart" id="categoryChart"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 VAPT Status</div>
+        <div class="mini-bar-chart" id="vaptChart"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">✅ Approval Status</div>
+        <div class="mini-bar-chart" id="approvalChart"></div>
+      </div>
+    </div>
+    <div class="card mt-24">
+      <div class="card-title">📅 Recent Activity (Last 20 RFCs)</div>
+      <div class="timeline" id="activityTimeline"></div>
+    </div>
+  </div>
+
+  <!-- ══ SETTINGS ══ -->
+  <div id="page-settings" class="page">
+    <div class="page-hdr">
+      <div><h1>⚙️ Settings</h1><p>Manage dropdown options and system configuration</p></div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('settingsTab','tabStatus')">🔵 Statuses</button>
+      <button class="tab-btn" onclick="switchTab('settingsTab','tabTypes')">🔷 Change Types</button>
+      <button class="tab-btn" onclick="switchTab('settingsTab','tabCategories')">🗂 Categories</button>
+      <button class="tab-btn" onclick="switchTab('settingsTab','tabRequesters')">👤 Requesters</button>
+      <button class="tab-btn" onclick="switchTab('settingsTab','tabVAPT')">🛡 VAPT</button>
+      <button class="tab-btn" onclick="switchTab('settingsTab','tabApproval')">✅ Approval</button>
+      <button class="tab-btn" onclick="switchTab('settingsTab','tabStakeholders')">📧 Stakeholders</button>
+      <button class="tab-btn" onclick="switchTab('settingsTab','tabCMConfig')">⚙ CM Config</button>
+    </div>
+    <div id="settingsTab">
+      <div id="tabStatus" class="tab-panel active">
+        <div class="card">
+          <div class="card-title">Manage RFC Statuses</div>
+          <div style="display:flex;gap:10px;margin-bottom:12px;">
+            <input type="text" class="form-control" id="addStatusInput" placeholder="New status value…" style="max-width:300px;">
+            <button class="btn btn-primary" onclick="addDropdownItem('statuses','addStatusInput')">+ Add</button>
+          </div>
+          <ul class="settings-list" id="statusesList"></ul>
+        </div>
+      </div>
+      <div id="tabTypes" class="tab-panel">
+        <div class="card">
+          <div class="card-title">Manage Change Types</div>
+          <div style="display:flex;gap:10px;margin-bottom:12px;">
+            <input type="text" class="form-control" id="addTypeInput" placeholder="New type…" style="max-width:300px;">
+            <button class="btn btn-primary" onclick="addDropdownItem('changeTypes','addTypeInput')">+ Add</button>
+          </div>
+          <ul class="settings-list" id="changeTypesList"></ul>
+        </div>
+      </div>
+      <div id="tabCategories" class="tab-panel">
+        <div class="card">
+          <div class="card-title">Manage Categories</div>
+          <div style="display:flex;gap:10px;margin-bottom:12px;">
+            <input type="text" class="form-control" id="addCategoryInput" placeholder="New category…" style="max-width:300px;">
+            <button class="btn btn-primary" onclick="addDropdownItem('categories','addCategoryInput')">+ Add</button>
+          </div>
+          <ul class="settings-list" id="categoriesList"></ul>
+        </div>
+      </div>
+      <div id="tabRequesters" class="tab-panel">
+        <div class="card">
+          <div class="card-title">Manage Requesters</div>
+          <div style="display:flex;gap:10px;margin-bottom:12px;">
+            <input type="text" class="form-control" id="addRequesterInput" placeholder="New requester name…" style="max-width:300px;">
+            <button class="btn btn-primary" onclick="addDropdownItem('requesters','addRequesterInput')">+ Add</button>
+          </div>
+          <ul class="settings-list" id="requestersList"></ul>
+        </div>
+      </div>
+      <div id="tabVAPT" class="tab-panel">
+        <div class="card">
+          <div class="card-title">Manage VAPT Status Options</div>
+          <div style="display:flex;gap:10px;margin-bottom:12px;">
+            <input type="text" class="form-control" id="addVaptInput" placeholder="New VAPT status…" style="max-width:300px;">
+            <button class="btn btn-primary" onclick="addDropdownItem('vaptStatuses','addVaptInput')">+ Add</button>
+          </div>
+          <ul class="settings-list" id="vaptStatusesList"></ul>
+        </div>
+      </div>
+      <div id="tabApproval" class="tab-panel">
+        <div class="card">
+          <div class="card-title">Manage Approval Status Options</div>
+          <div style="display:flex;gap:10px;margin-bottom:12px;">
+            <input type="text" class="form-control" id="addApprovalInput" placeholder="New approval status…" style="max-width:300px;">
+            <button class="btn btn-primary" onclick="addDropdownItem('approvalStatuses','addApprovalInput')">+ Add</button>
+          </div>
+          <ul class="settings-list" id="approvalStatusesList"></ul>
+        </div>
+      </div>
+      <div id="tabStakeholders" class="tab-panel">
+        <div class="card">
+          <div class="card-title">Manage Stakeholder Email Directory</div>
+          <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+            <input type="text" class="form-control" id="addStakeholderName" placeholder="Name…" style="max-width:180px;">
+            <input type="text" class="form-control" id="addStakeholderEmail" placeholder="email@jainam.in" style="max-width:220px;">
+            <select class="form-control" id="addStakeholderRole" style="max-width:160px;">
+              <option>Senior Management</option><option>CAB Member</option>
+              <option>IT Team</option><option>HOD</option><option>Other</option>
+            </select>
+            <button class="btn btn-primary" onclick="addStakeholder()">+ Add</button>
+          </div>
+          <ul class="settings-list" id="stakeholdersList"></ul>
+        </div>
+      </div>
+      <div id="tabCMConfig" class="tab-panel">
+        <div class="card">
+          <div class="card-title">☁ OneDrive Data Source</div>
+          <div class="form-grid">
+            <div class="form-group" style="grid-column:1/-1;">
+              <label class="form-label">OneDrive Share URL <span class="req">*</span></label>
+              <div style="display:flex;gap:8px;">
+                <input type="text" class="form-control" id="settings_onedrive_url"
+                  placeholder="https://jainamin-my.sharepoint.com/:x:/g/personal/…"
+                  oninput="oneDriveURL=this.value"
+                  style="flex:1;">
+                <button class="btn btn-primary" onclick="saveOneDriveURL(document.getElementById('settings_onedrive_url').value);syncFromOneDrive();">💾 Save &amp; Sync</button>
+              </div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:5px;">
+                Paste your OneDrive share link. File must be shared as <strong>"Anyone with the link"</strong>.<br>
+                <span style="color:var(--warning);font-weight:600;">⚠ Note:</span> Sync only works when portal is opened from a web server or OneDrive itself — not from a local <code>file://</code> path (browser security restriction).<br>
+                <a href="#" onclick="openModal('syncHelpModal');return false;" style="color:var(--primary);font-weight:600;text-decoration:underline;">View setup options →</a>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Auto-Sync Interval</label>
+              <select class="form-control" id="settings_autosync" onchange="startAutoSync(parseInt(this.value));localStorage.setItem('jcm_autosync',this.value);">
+                <option value="0">Manual only</option>
+                <option value="5">Every 5 minutes</option>
+                <option value="10">Every 10 minutes</option>
+                <option value="30">Every 30 minutes</option>
+                <option value="60">Every hour</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last Sync</label>
+              <div id="lastSyncDisplay" style="background:var(--bg-soft);border:1px solid var(--border-light);border-radius:var(--radius);padding:9px 12px;font-size:13px;font-weight:600;color:var(--success);">—</div>
+            </div>
+          </div>
+          <hr class="divider">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <button class="btn btn-primary" onclick="syncFromOneDrive()">☁ Sync Now</button>
+            <button class="btn btn-outline" onclick="loadCachedData()">📦 Load Offline Cache</button>
+            <div style="font-size:12px;color:var(--text-muted);flex:1;">
+              If sync fails (network/CORS), the portal auto-falls back to offline cache from last successful sync.
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">⚙ Change Management Configuration</div>
+          <div class="form-grid form-grid-2">
+            <div class="form-group">
+              <label class="form-label">CM Distribution Email</label>
+              <input type="text" class="form-control" id="settings_cmEmail" value="change.management@jainam.in" placeholder="change.management@jainam.in" oninput="cmEmail=this.value;document.getElementById('cmEmailInput').value=this.value;">
+              <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">All daily 7 PM reports will be addressed to this email.</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Auto End Date Rule</label>
+              <div style="background:var(--bg-soft);border:1px solid var(--border-light);border-radius:var(--radius);padding:12px;font-size:13px;">
+                Application RFC + "Go Ahead Given" → End Date = Start Date <strong>+ 16 calendar days</strong>
+              </div>
+            </div>
+          </div>
+          <hr class="divider">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <div id="eodStatus2" style="font-size:13px;color:var(--text-muted);flex:1;"></div>
+            <button class="btn btn-primary" onclick="sendEODNow()">📧 Preview Daily Report Now</button>
+            <button class="btn btn-outline" onclick="scheduleEODEmail();toast('7 PM scheduler reset!','success');">🔄 Reset 7 PM Timer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ░░ MODALS ░░ -->
+<!-- View / Edit RFC Modal -->
+<div class="modal-overlay" id="rfcModal">
+  <div class="modal modal-xl">
+    <div class="modal-header">
+      <h2 id="rfcModalTitle">RFC Details</h2>
+      <button class="modal-close" onclick="closeModal('rfcModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="tabs" style="margin-top:0;">
+        <button class="tab-btn active" onclick="switchTab('rfcModalTab','rfcTabDetails')">📋 Details</button>
+        <button class="tab-btn" onclick="switchTab('rfcModalTab','rfcTabEdit')">✏️ Edit</button>
+        <button class="tab-btn" onclick="switchTab('rfcModalTab','rfcTabHistory')">🕐 Audit Log</button>
+      </div>
+      <div id="rfcModalTab">
+        <!-- Details Tab -->
+        <div id="rfcTabDetails" class="tab-panel active">
+          <div class="info-row">
+            <div class="info-item"><div class="info-label">RFC Number</div><div class="info-value" id="det_rfcNum" style="font-family:monospace;font-size:16px;color:var(--primary);"></div></div>
+            <div class="info-item"><div class="info-label">Category</div><div class="info-value" id="det_category"></div></div>
+            <div class="info-item"><div class="info-label">Change Type</div><div class="info-value" id="det_changeType"></div></div>
+            <div class="info-item"><div class="info-label">Requester</div><div class="info-value" id="det_requester"></div></div>
+          </div>
+          <div class="info-row">
+            <div class="info-item"><div class="info-label">Status</div><div class="info-value" id="det_status"></div></div>
+            <div class="info-item"><div class="info-label">Received Date</div><div class="info-value" id="det_received"></div></div>
+            <div class="info-item"><div class="info-label">Start Date</div><div class="info-value" id="det_start"></div></div>
+            <div class="info-item"><div class="info-label">End Date</div><div class="info-value" id="det_end"></div></div>
+          </div>
+          <div class="form-group" style="margin-bottom:16px;">
+            <div class="form-label">Change Title</div>
+            <div id="det_title" style="background:var(--bg-soft);padding:12px;border-radius:var(--radius);font-size:13px;border:1px solid var(--border-light);line-height:1.6;"></div>
+          </div>
+          <div class="info-row">
+            <div class="info-item"><div class="info-label">VAPT Status</div><div class="info-value" id="det_vapt"></div></div>
+            <div class="info-item"><div class="info-label">Approval &amp; Artifacts Status</div><div class="info-value" id="det_approval"></div></div>
+          </div>
+        </div>
+        <!-- Edit Tab -->
+        <div id="rfcTabEdit" class="tab-panel">
+          <input type="hidden" id="edit_idx">
+          <div class="form-grid form-grid-2">
+            <div class="form-group">
+              <label class="form-label">RFC Number <span class="req">*</span></label>
+              <input type="text" class="form-control" id="edit_rfcNum" oninput="validateEditRFCNum(this)">
+              <div id="edit_rfcNum_msg" style="font-size:11px;margin-top:3px;"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Received Date</label>
+              <input type="date" class="form-control" id="edit_receivedDate">
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <label class="form-label">Change Title</label>
+              <textarea class="form-control" id="edit_title" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Category</label>
+              <select class="form-control" id="edit_category"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Change Type</label>
+              <select class="form-control" id="edit_changeType"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Requester Name</label>
+              <input type="text" class="form-control" id="edit_requester" list="editRequesterList" autocomplete="off">
+              <datalist id="editRequesterList"></datalist>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Status</label>
+              <select class="form-control" id="edit_status" onchange="autoFillEndDate('edit')"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Start Date</label>
+              <input type="date" class="form-control" id="edit_startDate">
+            </div>
+            <div class="form-group">
+              <label class="form-label">End Date</label>
+              <input type="date" class="form-control" id="edit_endDate">
+            </div>
+            <div class="form-group">
+              <label class="form-label">VAPT Status</label>
+              <select class="form-control" id="edit_vapt"></select>
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <label class="form-label">Approval &amp; Artifacts Received Status</label>
+              <select class="form-control" id="edit_approval"></select>
+            </div>
+          </div>
+        </div>
+        <!-- History Tab -->
+        <div id="rfcTabHistory" class="tab-panel">
+          <div class="timeline" id="rfcAuditLog">
+            <div class="text-muted text-center" style="padding:20px;">No audit log entries yet.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" onclick="deleteRFC()">🗑 Delete</button>
+      <button class="btn btn-outline" onclick="closeModal('rfcModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditRFC()">💾 Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk Decision Modal -->
+<div class="modal-overlay" id="bulkModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>⚡ Bulk CAB Decision</h2>
+      <button class="modal-close" onclick="closeModal('bulkModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="text-muted" style="margin-bottom:16px;">Apply a status decision to all selected CAB items.</p>
+      <div class="form-group">
+        <label class="form-label">Decision / New Status</label>
+        <select class="form-control" id="bulk_status"></select>
+      </div>
+      <div class="form-group" style="margin-top:12px;">
+        <label class="form-label">Start Date (optional)</label>
+        <input type="date" class="form-control" id="bulk_startDate">
+      </div>
+      <div class="form-group" style="margin-top:12px;">
+        <label class="form-label">End Date (optional)</label>
+        <input type="date" class="form-control" id="bulk_endDate">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('bulkModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="applyBulkDecision()">Apply to Selected</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sync Help Modal -->
+<div class="modal-overlay" id="syncHelpModal">
+  <div class="modal modal-lg">
+    <div class="modal-header" style="background:var(--primary-dark);">
+      <h2 style="color:#fff;">☁ OneDrive Sync — Setup Guide</h2>
+      <button class="modal-close" style="color:rgba(255,255,255,0.7);" onclick="closeModal('syncHelpModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:var(--radius);padding:14px;margin-bottom:18px;font-size:13px;">
+        <strong>⚠ Why sync fails from a local file:</strong> Browsers block cross-origin requests from <code>file://</code> for security. Microsoft also requires authentication redirects for OneDrive downloads.
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <div style="font-size:14px;font-weight:700;color:var(--primary-dark);margin-bottom:12px;">✅ Option 1 — Best: Open this portal from SharePoint (Recommended)</div>
+        <ol style="font-size:13px;line-height:2;padding-left:20px;color:var(--text);">
+          <li>Go to <strong>https://jainamin-my.sharepoint.com</strong> → your OneDrive</li>
+          <li>Upload <strong>Jainam_Change_Management_Portal.html</strong> to your OneDrive</li>
+          <li>Open the HTML file from OneDrive in your browser</li>
+          <li>Now sync works — same Microsoft domain, no CORS block</li>
+        </ol>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <div style="font-size:14px;font-weight:700;color:var(--primary-dark);margin-bottom:12px;">✅ Option 2 — Get a Direct Download Link from OneDrive</div>
+        <ol style="font-size:13px;line-height:2;padding-left:20px;color:var(--text);">
+          <li>Open your OneDrive file → click <strong>Share</strong></li>
+          <li>Set to <strong>"Anyone with the link"</strong> → Copy Link</li>
+          <li>Open the copied link in browser → file downloads</li>
+          <li>Copy the <strong>final URL from the browser address bar</strong> after redirect</li>
+          <li>Paste that URL in Settings → CM Config → OneDrive URL</li>
+        </ol>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <div style="font-size:14px;font-weight:700;color:var(--primary-dark);margin-bottom:12px;">✅ Option 3 — Use Local File + Manual Sync Workflow</div>
+        <div style="font-size:13px;line-height:1.8;color:var(--text);">
+          Keep your Excel on OneDrive as the master. When you need to work:<br>
+          1. Download the latest file from OneDrive (one click)<br>
+          2. Click <strong>"Load Local XLS"</strong> in the header<br>
+          3. Make changes → click <strong>"Save XLS"</strong><br>
+          4. Upload the saved file back to OneDrive (replace)
+        </div>
+      </div>
+
+      <div style="background:var(--bg-soft);border:1px solid var(--border-light);border-radius:var(--radius);padding:14px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px;">YOUR ONEDRIVE FILE</div>
+        <div style="font-size:12px;word-break:break-all;">
+          <a id="syncHelpURL" href="#" target="_blank" style="color:var(--primary);">—</a>
+        </div>
+        <button class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="window.open(document.getElementById('syncHelpURL').href,'_blank')">🔗 Open in OneDrive</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('syncHelpModal')">Close</button>
+      <label class="btn btn-primary" style="cursor:pointer;">
+        📂 Load Local XLS Instead
+        <input type="file" accept=".xlsx,.xls" style="display:none" onchange="loadFile(this);closeModal('syncHelpModal');">
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- EOD 7 PM Email Modal -->
+<div class="modal-overlay" id="eodModal">
+  <div class="modal modal-lg">
+    <div class="modal-header" style="background:var(--primary-dark);">
+      <h2 style="color:#fff;">📧 Daily CM Report — 7:00 PM</h2>
+      <button class="modal-close" style="color:rgba(255,255,255,0.7);" onclick="closeModal('eodModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--bg-soft);border:1px solid var(--border-light);border-radius:var(--radius);padding:14px;margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">To</div>
+        <div id="eodTo" style="font-weight:700;color:var(--primary);"></div>
+        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:10px 0 4px;">Subject</div>
+        <div id="eodSubject" style="font-weight:600;"></div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Email Body</div>
+      <div id="eodBody" style="background:#fff;border:1px solid var(--border-light);border-radius:var(--radius);padding:18px;font-size:12.5px;line-height:1.8;white-space:pre-wrap;max-height:420px;overflow-y:auto;font-family:var(--font);"></div>
+      <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span style="font-size:12px;color:var(--text-muted);">CM Email:</span>
+        <input type="text" class="form-control" id="cmEmailInput" style="max-width:280px;padding:6px 10px;font-size:12px;" placeholder="change.management@jainam.in" oninput="cmEmail=this.value">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('eodModal')">Close</button>
+      <button class="btn btn-success" onclick="copyEODEmail()">📋 Copy Full Email</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<script>
+// ============================================================
+// DATA STORE
+// ============================================================
+// OneDrive config — direct download URL (share link + ?download=1)
+let oneDriveURL = localStorage.getItem('jcm_onedrive_url') || '';
+let lastSyncTime = localStorage.getItem('jcm_last_sync') || '';
+let autoSyncInterval = null;
+
+let data = [];
+let filteredData = [];
+let currentPage = 1;
+const PAGE_SIZE = 25;
+let sortCol = 'RFC Number';
+let sortDir = -1;
+let currentEditIdx = null;
+let auditLog = {};
+
+let dropdowns = {
+  statuses: ['go ahead given','Need to discuss in CAB meeting','Waiting for HOD approval','Approved','Rejected','Deferred','Cancelled','In Progress','Completed'],
+  changeTypes: ['Normal Change','Expedite Change','Emergency Change','Standard Change'],
+  categories: ['Application','Infra','Network','Database','Security','Cloud'],
+  requesters: ['Sunil Shahu','Tanuj Gupta','Vivek Mule','Rishi Vyas','Charu Jasani','Javed Ali','Raquib Khan','Jitendra Kalasariya','Vishal Malusare','Saqlain Shaikh','Vighneshwar Boga','Chandramol Pandey','Nashrullah Khan','Harsh Patel','Karmvir Gohil','Harsh Jariwala','Kaveri Dhore'],
+  vaptStatuses: ['Not Required','Pending','Completed','Passed','Failed','Waived'],
+  approvalStatuses: ['Waiting for HOD approval','HOD Approved','Artifacts Received','Pending','Approved','Rejected','Not Applicable'],
+};
+
+let stakeholders = [
+  {name:'IT Head',email:'ithead@jainam.in',role:'Senior Management'},
+  {name:'CAB Chair',email:'cab@jainam.in',role:'CAB Member'},
+  {name:'Risk & Compliance',email:'risk@jainam.in',role:'Senior Management'},
+  {name:'IT Operations',email:'itops@jainam.in',role:'IT Team'},
+];
+
+// ============================================================
+// HELPERS
+// ============================================================
+const fmt = d => {
+  if(!d) return '—';
+  if(d instanceof Date) return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  if(typeof d === 'string' && d.match(/\d{4}-\d{2}-\d{2}/)) {
+    const dt = new Date(d); return isNaN(dt) ? d : dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  }
+  return d;
+};
+const fmtISO = d => {
+  if(!d) return '';
+  if(d instanceof Date && !isNaN(d)) return d.toISOString().split('T')[0];
+  if(typeof d === 'string' && d.match(/\d{4}-\d{2}-\d{2}/)) return d;
+  return '';
+};
+
+function statusBadge(s) {
+  if(!s) return '<span class="badge badge-gray"><span class="badge-dot"></span>—</span>';
+  const l = s.toLowerCase();
+  if(l.includes('go ahead') || l.includes('approved') || l.includes('completed')) return `<span class="badge badge-green"><span class="badge-dot"></span>${s}</span>`;
+  if(l.includes('cab') || l.includes('discuss') || l.includes('in progress')) return `<span class="badge badge-blue"><span class="badge-dot"></span>${s}</span>`;
+  if(l.includes('hod') || l.includes('waiting') || l.includes('pending')) return `<span class="badge badge-orange"><span class="badge-dot"></span>${s}</span>`;
+  if(l.includes('reject') || l.includes('fail') || l.includes('cancel')) return `<span class="badge badge-red"><span class="badge-dot"></span>${s}</span>`;
+  if(l.includes('defer')) return `<span class="badge badge-purple"><span class="badge-dot"></span>${s}</span>`;
+  return `<span class="badge badge-gray"><span class="badge-dot"></span>${s}</span>`;
+}
+function typeBadge(t) {
+  if(!t) return '—';
+  if(t.toLowerCase().includes('expedite') || t.toLowerCase().includes('emergency')) return `<span class="badge badge-gold"><span class="badge-dot"></span>${t}</span>`;
+  return `<span class="badge badge-blue"><span class="badge-dot"></span>${t}</span>`;
+}
+function catBadge(c) {
+  if(!c) return '—';
+  if(c.toLowerCase()==='infra') return `<span class="tag" style="background:#e8f0fb;color:#1a56c4;border-color:#c8d9f7;">🖥 ${c}</span>`;
+  return `<span class="tag" style="background:#e8f5ee;color:#1e8449;border-color:#b7e4c7;">📱 ${c}</span>`;
+}
+
+function toast(msg, type='info') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  const icon = type==='success'?'✅':type==='error'?'❌':'ℹ️';
+  t.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(()=>t.remove(), 3800);
+}
+
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll(`.nav-item`).forEach(n=>{
+    if(n.getAttribute('onclick')?.includes(page)) n.classList.add('active');
+  });
+  if(page==='rfcList') renderRFCTable();
+  if(page==='dashboard') refreshDashboard();
+  if(page==='analytics') renderAnalytics();
+  if(page==='cabMeeting') renderCABTable();
+  if(page==='settings') renderAllSettings();
+  if(page==='reporting') { buildEmailPreview(); populateRptFilters(); }
+}
+
+function switchTab(containerId, tabId) {
+  const container = document.getElementById(containerId);
+  container.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  const tabsEl = container.parentElement.querySelector('.tabs');
+  if(tabsEl) tabsEl.querySelectorAll('.tab-btn').forEach((b,i)=>{
+    const panels = container.querySelectorAll('.tab-panel');
+    if(panels[i]) b.classList.toggle('active', panels[i].id===tabId);
+  });
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+window.onclick = e => { if(e.target.classList.contains('modal-overlay')) e.target.classList.remove('open'); };
+
+// ============================================================
+// ONEDRIVE SYNC — Microsoft Graph API (share token method)
+// Works for "Anyone with the link" shared files, no app registration needed
+// ============================================================
+
+function setSyncStatus(msg, color) {
+  const el = document.getElementById('sync-status');
+  if(el) { el.textContent = msg; el.style.color = color || 'rgba(255,255,255,0.35)'; }
+}
+
+function setSyncBtnState(loading) {
+  const btn = document.getElementById('syncBtn');
+  if(!btn) return;
+  btn.textContent = loading ? '⏳ Syncing…' : '☁ Sync OneDrive';
+  btn.disabled = loading;
+  btn.style.opacity = loading ? '0.6' : '';
+}
+
+// Convert a OneDrive share URL into a Graph API download URL using share token
+// Works for "Anyone with the link" public shares — no OAuth needed
+function buildGraphURL(shareURL) {
+  // Encode the share URL to base64url (Microsoft's format)
+  const encoded = btoa(shareURL)
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
+  const shareToken = 'u!' + encoded;
+  return 'https://graph.microsoft.com/v1.0/shares/' + shareToken + '/driveItem/content';
+}
+
+// Strip tracking params and normalise the share URL
+function normaliseShareURL(url) {
+  url = url.trim();
+  // Remove rtime, e= and other tracking params but keep the base
+  try {
+    const u = new URL(url);
+    // Keep only the path — strip all query params (they're tracking only)
+    return u.origin + u.pathname;
+  } catch(e) {
+    return url.split('?')[0];
+  }
+}
+
+async function syncFromOneDrive(silent) {
+  const rawURL = oneDriveURL || localStorage.getItem('jcm_onedrive_url') || '';
+  if(!rawURL) {
+    if(!silent) {
+      toast('No OneDrive URL configured. Go to Settings → CM Config.', 'error');
+      navigate('settings');
+      setTimeout(()=>switchTab('settingsTab','tabCMConfig'), 100);
+    }
+    return;
+  }
+
+  if(!silent) { setSyncBtnState(true); setSyncStatus('Connecting…', 'rgba(255,255,255,0.5)'); }
+
+  const cleanURL = normaliseShareURL(rawURL);
+  const graphURL = buildGraphURL(cleanURL);
+
+  // --- Attempt 1: Microsoft Graph API (best for public shares) ---
+  try {
+    if(!silent) setSyncStatus('Trying Graph API…', 'rgba(255,255,255,0.5)');
+    const resp = await fetch(graphURL, {
+      headers: { 'Accept': 'application/octet-stream' },
+      redirect: 'follow'
+    });
+    if(!resp.ok) throw new Error('Graph ' + resp.status);
+    const ab = await resp.arrayBuffer();
+    processXLSXBuffer(ab, 'OneDrive');
+    return;
+  } catch(e1) {
+    if(!silent) setSyncStatus('Graph failed, trying download link…', 'rgba(255,200,50,0.7)');
+  }
+
+  // --- Attempt 2: ?download=1 direct link ---
+  try {
+    const dlURL = cleanURL + '?download=1';
+    const resp2 = await fetch(dlURL, { redirect: 'follow', cache: 'no-store' });
+    if(!resp2.ok) throw new Error('Direct ' + resp2.status);
+    const ab2 = await resp2.arrayBuffer();
+    processXLSXBuffer(ab2, 'OneDrive (direct)');
+    return;
+  } catch(e2) {
+    if(!silent) setSyncStatus('Trying CORS proxy…', 'rgba(255,200,50,0.7)');
+  }
+
+  // --- Attempt 3: Multiple CORS proxies ---
+  const proxies = [
+    'https://corsproxy.io/?',
+    'https://api.allorigins.win/raw?url=',
+    'https://cors-anywhere.herokuapp.com/',
+  ];
+  for(const proxy of proxies) {
+    try {
+      const proxyURL = proxy + encodeURIComponent(graphURL);
+      const resp3 = await fetch(proxyURL, { cache: 'no-store' });
+      if(!resp3.ok) continue;
+      const ab3 = await resp3.arrayBuffer();
+      if(ab3.byteLength < 1000) continue; // too small, likely error page
+      processXLSXBuffer(ab3, 'OneDrive (proxy)');
+      return;
+    } catch(e3) { continue; }
+  }
+
+  // --- All failed ---
+  setSyncBtnState(false);
+  setSyncStatus('⚠ Sync failed', '#ff7070');
+  if(!silent) {
+    // Show the debug modal with instructions
+    openModal('syncHelpModal');
+  } else {
+    // Silent fail — try cache
+    loadCachedData();
+  }
+}
+
+function processXLSXBuffer(arrayBuffer, source) {
+  try {
+    const wb = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    const parsed = rows.filter(r => {
+      const rfcNum = String(r['RFC Number']||'').trim();
+      const title = String(r['Change Title']||'').trim();
+      return rfcNum && title && title !== 'PRIORITY | PROJECT | LAYER | CHANGE TYPE | MONTH SPRINT - SHORT DESCRIPTION | FEATURE ID(S)';
+    }).map(r => ({
+      'RFC Number': String(r['RFC Number']||'').trim(),
+      'Infra / Application': String(r['Infra / Application']||'').trim(),
+      'Change Title': String(r['Change Title']||'').trim(),
+      'Change Type': String(r['Change Type']||'').trim(),
+      'Received Date': r['Received Date'] || '',
+      'Requester Name': String(r['Requester Name']||'').trim(),
+      'Status': String(r['Status']||'').trim(),
+      'Start Date': r['Start Date'] || '',
+      'End Date': r['End Date'] || '',
+      'VAPT Status': String(r['VAPT Status']||'').trim(),
+      'Approval & Artifacts Received Status': String(r['Approval & Artifacts Received Status']||'').trim(),
+    }));
+    data = parsed;
+    syncDropdownsFromData();
+    updateNavBadges();
+    refreshDashboard();
+    const now = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    lastSyncTime = now;
+    localStorage.setItem('jcm_last_sync', now);
+    const fileEl = document.getElementById('file-status');
+    if(fileEl) { fileEl.textContent = '☁ ' + source + ' (' + data.length + ' RFCs)'; fileEl.style.color = '#4caf7d'; }
+    setSyncStatus('Last sync: ' + now, '#4caf7d');
+    setSyncBtnState(false);
+    toast('Synced ' + data.length + ' RFCs from ' + source, 'success');
+    // Cache for offline fallback
+    try { localStorage.setItem('jcm_cached_data', JSON.stringify(data)); } catch(e) {}
+  } catch(err) {
+    setSyncBtnState(false);
+    setSyncStatus('⚠ Parse error', '#ff7070');
+    toast('Error parsing file: ' + err.message, 'error');
+  }
+}
+
+function loadCachedData() {
+  try {
+    const cached = localStorage.getItem('jcm_cached_data');
+    if(cached) {
+      data = JSON.parse(cached);
+      syncDropdownsFromData();
+      updateNavBadges();
+      refreshDashboard();
+      const fileEl = document.getElementById('file-status');
+      if(fileEl) { fileEl.textContent = '📦 Cached (' + data.length + ' RFCs)'; fileEl.style.color = 'rgba(255,200,50,0.8)'; }
+      setSyncStatus('Offline cache — sync when online', 'rgba(255,200,50,0.7)');
+      toast('Loaded ' + data.length + ' RFCs from offline cache. Sync to get latest.', 'info');
+    }
+  } catch(e) {}
+}
+
+function startAutoSync(intervalMinutes) {
+  if(autoSyncInterval) clearInterval(autoSyncInterval);
+  if(!intervalMinutes || intervalMinutes < 1) return;
+  autoSyncInterval = setInterval(() => syncFromOneDrive(true), intervalMinutes * 60 * 1000);
+}
+
+function saveOneDriveURL(url) {
+  oneDriveURL = url.trim();
+  localStorage.setItem('jcm_onedrive_url', oneDriveURL);
+  toast('OneDrive URL saved!', 'success');
+}
+
+// ============================================================
+// FILE LOADING
+// ============================================================
+function loadFile(input) {
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    processXLSXBuffer(e.target.result, file.name);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function syncDropdownsFromData() {
+  const extract = field => [...new Set(data.map(r=>r[field]).filter(Boolean).map(s=>s.trim()))].sort();
+  const merge = (key, vals) => { dropdowns[key] = [...new Set([...dropdowns[key], ...vals])].sort(); };
+  merge('statuses', extract('Status'));
+  merge('changeTypes', extract('Change Type'));
+  merge('categories', extract('Infra / Application'));
+  merge('requesters', extract('Requester Name'));
+  merge('vaptStatuses', extract('VAPT Status'));
+  merge('approvalStatuses', extract('Approval & Artifacts Received Status'));
+  populateAllDropdowns();
+  populateFilterDropdowns();
+}
+
+// ============================================================
+// EXPORT / BACKUP
+// ============================================================
+function exportXLS() {
+  if(!data.length) { toast('No data to export', 'error'); return; }
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'RFC Tracker');
+  XLSX.writeFile(wb, 'RFC_Tracker_Jainam.xlsx');
+  toast('Exported successfully!', 'success');
+}
+
+function createBackup() {
+  if(!data.length) { toast('No data to backup', 'error'); return; }
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'RFC Tracker');
+  const ts = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+  XLSX.writeFile(wb, `RFC_Tracker_Backup_${ts}.xlsx`);
+  toast('Backup created!', 'success');
+}
+
+// ============================================================
+// DROPDOWNS
+// ============================================================
+function populateSelect(id, items, includeBlank=false) {
+  const el = document.getElementById(id);
+  if(!el) return;
+  const cur = el.value;
+  el.innerHTML = (includeBlank ? '<option value="">—</option>' : '') +
+    items.map(i=>`<option value="${i}">${i}</option>`).join('');
+  if(cur) el.value = cur;
+}
+
+function populateRequesterDatalist() {
+  ['requesterList','editRequesterList'].forEach(id=>{
+    const dl = document.getElementById(id);
+    if(dl) dl.innerHTML = dropdowns.requesters.map(r=>`<option value="${r}">`).join('');
+  });
+}
+
+function populateAllDropdowns() {
+  ['new_','edit_'].forEach(p=>{
+    populateSelect(p+'category', dropdowns.categories);
+    populateSelect(p+'changeType', dropdowns.changeTypes);
+    populateSelect(p+'status', dropdowns.statuses);
+    populateSelect(p+'vapt', dropdowns.vaptStatuses, true);
+    populateSelect(p+'approval', dropdowns.approvalStatuses, true);
+  });
+  populateSelect('bulk_status', dropdowns.statuses);
+  populateRequesterDatalist();
+}
+
+function populateFilterDropdowns() {
+  const fStatus = document.getElementById('filterStatus');
+  const fType = document.getElementById('filterType');
+  const fCat = document.getElementById('filterCategory');
+  const fVAPT = document.getElementById('filterVAPT');
+  if(fStatus) {
+    const sv = fStatus.value;
+    fStatus.innerHTML = '<option value="">All Statuses</option>' + dropdowns.statuses.map(s=>`<option>${s}</option>`).join('');
+    fStatus.value = sv;
+  }
+  if(fType) {
+    const tv = fType.value;
+    fType.innerHTML = '<option value="">All Types</option>' + dropdowns.changeTypes.map(t=>`<option>${t}</option>`).join('');
+    fType.value = tv;
+  }
+  if(fCat) {
+    const cv = fCat.value;
+    fCat.innerHTML = '<option value="">All Categories</option>' + dropdowns.categories.map(c=>`<option>${c}</option>`).join('');
+    fCat.value = cv;
+  }
+  if(fVAPT) {
+    const vv = fVAPT.value;
+    fVAPT.innerHTML = '<option value="">All VAPT</option>' + dropdowns.vaptStatuses.map(v=>`<option>${v}</option>`).join('');
+    fVAPT.value = vv;
+  }
+}
+
+function populateRptFilters() {
+  const el = document.getElementById('rpt_statusFilter');
+  if(el) el.innerHTML = '<option value="">All</option>' + dropdowns.statuses.map(s=>`<option>${s}</option>`).join('');
+}
+
+populateAllDropdowns();
+
+// ============================================================
+// RFC TABLE
+// ============================================================
+function applyFilters() {
+  const q = (document.getElementById('searchInput')?.value||'').toLowerCase().trim();
+  const fSt = document.getElementById('filterStatus')?.value||'';
+  const fTy = document.getElementById('filterType')?.value||'';
+  const fCa = document.getElementById('filterCategory')?.value||'';
+  const fVA = document.getElementById('filterVAPT')?.value||'';
+  filteredData = data.filter(r=>{
+    const vals = Object.values(r).map(v=>String(v).toLowerCase());
+    const match = !q || vals.some(v=>v.includes(q));
+    const sSt = !fSt || (r.Status||'') === fSt;
+    const sTy = !fTy || (r['Change Type']||'') === fTy;
+    const sCa = !fCa || (r['Infra / Application']||'') === fCa;
+    const sVA = !fVA || (r['VAPT Status']||'') === fVA;
+    return match && sSt && sTy && sCa && sVA;
+  });
+  sortFilteredData();
+  currentPage = 1;
+  renderRFCTable();
+  const fc = document.getElementById('filterCount');
+  if(fc) fc.textContent = `${filteredData.length} of ${data.length} records`;
+}
+
+function clearFilters() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('filterStatus').value = '';
+  document.getElementById('filterType').value = '';
+  document.getElementById('filterCategory').value = '';
+  document.getElementById('filterVAPT').value = '';
+  applyFilters();
+}
+
+function sortTable(col) {
+  if(sortCol === col) sortDir *= -1;
+  else { sortCol = col; sortDir = 1; }
+  document.querySelectorAll('#rfcTable thead th').forEach(th=>{
+    th.classList.remove('sorted-asc','sorted-desc');
+  });
+  document.querySelectorAll('#rfcTable thead th').forEach(th=>{
+    if(th.getAttribute('onclick')?.includes(`'${col}'`))
+      th.classList.add(sortDir===1?'sorted-asc':'sorted-desc');
+  });
+  sortFilteredData();
+  renderRFCTable();
+}
+
+function sortFilteredData() {
+  filteredData.sort((a,b)=>{
+    let va = a[sortCol]||'', vb = b[sortCol]||'';
+    if(va instanceof Date && vb instanceof Date) return (va-vb)*sortDir;
+    return String(va).localeCompare(String(vb))*sortDir;
+  });
+}
+
+function renderRFCTable() {
+  if(filteredData === undefined || (filteredData.length === 0 && data.length > 0 && !document.getElementById('searchInput')?.value && !document.getElementById('filterStatus')?.value && !document.getElementById('filterType')?.value && !document.getElementById('filterCategory')?.value && !document.getElementById('filterVAPT')?.value)) {
+    filteredData = [...data];
+    sortFilteredData();
+  }
+  const start = (currentPage-1)*PAGE_SIZE;
+  const pageData = filteredData.slice(start, start+PAGE_SIZE);
+  const tbody = document.getElementById('rfcBody');
+  if(!pageData.length) {
+    tbody.innerHTML = `<tr><td colspan="12"><div class="empty-state"><div class="empty-icon">📭</div><p>No RFC records found. Load an XLS file or create a new RFC.</p></div></td></tr>`;
+  } else {
+    tbody.innerHTML = pageData.map((r,i)=>{
+      const idx = data.indexOf(r);
+      return `<tr>
+        <td class="rfc-num">${r['RFC Number']}</td>
+        <td>${catBadge(r['Infra / Application'])}</td>
+        <td><div class="change-title" title="${r['Change Title']}">${r['Change Title']||'—'}</div></td>
+        <td>${typeBadge(r['Change Type'])}</td>
+        <td>${r['Requester Name']||'—'}</td>
+        <td>${statusBadge(r.Status)}</td>
+        <td style="white-space:nowrap;font-size:12px;">${fmt(r['Received Date'])}</td>
+        <td style="white-space:nowrap;font-size:12px;">${fmt(r['Start Date'])}</td>
+        <td style="white-space:nowrap;font-size:12px;">${fmt(r['End Date'])}</td>
+        <td>${r['VAPT Status'] ? `<span class="badge badge-blue"><span class="badge-dot"></span>${r['VAPT Status']}</span>` : '<span class="text-muted" style="font-size:11px;">—</span>'}</td>
+        <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;" title="${r['Approval & Artifacts Received Status']}">${r['Approval & Artifacts Received Status']||'—'}</td>
+        <td>
+          <div style="display:flex;gap:4px;">
+            <button class="btn btn-outline btn-xs" onclick="openRFCModal(${idx})">View</button>
+            <button class="btn btn-danger btn-xs" onclick="confirmDelete(${idx})">✕</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+  renderPagination();
+}
+
+function renderPagination() {
+  const total = filteredData.length;
+  const pages = Math.ceil(total/PAGE_SIZE);
+  const start = (currentPage-1)*PAGE_SIZE+1;
+  const end = Math.min(currentPage*PAGE_SIZE, total);
+  document.getElementById('paginationInfo').textContent = total ? `Showing ${start}–${end} of ${total} RFCs` : '0 records';
+  const btns = document.getElementById('pageButtons');
+  let html = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage<=1?'disabled':''}>‹</button>`;
+  for(let p=Math.max(1,currentPage-2); p<=Math.min(pages,currentPage+2); p++)
+    html += `<button class="page-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+  html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage>=pages?'disabled':''}>›</button>`;
+  btns.innerHTML = html;
+}
+function goPage(p) { const pages=Math.ceil(filteredData.length/PAGE_SIZE); if(p<1||p>pages)return; currentPage=p; renderRFCTable(); }
+
+// ============================================================
+// RFC CRUD
+// ============================================================
+function getNextRFCNum() {
+  const allNums = data.map(r=>parseInt(String(r['RFC Number']).replace(/[^0-9]/g,''))||0);
+  const maxNum = allNums.length ? Math.max(...allNums) : 2334;
+  return 'RFC-' + (maxNum + 1);
+}
+
+function clearNewRFCForm() {
+  document.getElementById('new_rfcNum').value = getNextRFCNum();
+  document.getElementById('new_rfcNum').style.borderColor = '';
+  document.getElementById('new_rfcNum_msg').textContent = '';
+  document.getElementById('new_receivedDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('new_title').value = '';
+  document.getElementById('new_requester').value = '';
+  document.getElementById('new_startDate').value = '';
+  document.getElementById('new_endDate').value = '';
+}
+
+// RFC Number validation — new form
+function validateNewRFCNum(input) {
+  const val = input.value.trim();
+  const msg = document.getElementById('new_rfcNum_msg');
+  if(!val) { msg.textContent = ''; input.style.borderColor=''; return; }
+  const fmtOk = /^RFC-\d+$/.test(val);
+  if(!fmtOk) {
+    msg.textContent = '⚠ Format must be RFC-XXXX (e.g. RFC-2335)';
+    msg.style.color = 'var(--warning)'; input.style.borderColor = 'var(--warning)'; return;
+  }
+  const conflict = data.some(r => r['RFC Number'] === val);
+  if(conflict) {
+    msg.textContent = '❌ This RFC number already exists!';
+    msg.style.color = 'var(--danger)'; input.style.borderColor = 'var(--danger)'; return;
+  }
+  msg.textContent = '✓ RFC number is available';
+  msg.style.color = 'var(--success)'; input.style.borderColor = 'var(--success)';
+}
+
+// RFC Number validation — edit form (skip self)
+function validateEditRFCNum(input) {
+  const val = input.value.trim();
+  const msg = document.getElementById('edit_rfcNum_msg');
+  const selfIdx = parseInt(document.getElementById('edit_idx').value);
+  if(!val) { msg.textContent = ''; input.style.borderColor=''; return; }
+  const fmtOk = /^RFC-\d+$/.test(val);
+  if(!fmtOk) {
+    msg.textContent = '⚠ Format must be RFC-XXXX'; msg.style.color='var(--warning)'; input.style.borderColor='var(--warning)'; return;
+  }
+  const conflict = data.some((r,i) => r['RFC Number'] === val && i !== selfIdx);
+  if(conflict) {
+    msg.textContent = '❌ Conflict — this RFC number is used by another record!';
+    msg.style.color='var(--danger)'; input.style.borderColor='var(--danger)'; return;
+  }
+  msg.textContent = '✓ OK'; msg.style.color='var(--success)'; input.style.borderColor='var(--success)';
+}
+
+function autoFillEndDate(prefix) {
+  const status = document.getElementById(prefix+'_status').value;
+  const catEl = document.getElementById(prefix+'_category');
+  const category = catEl ? catEl.value : '';
+  const startDateEl = document.getElementById(prefix+'_startDate');
+  const endDateEl = document.getElementById(prefix+'_endDate');
+  const isGoAhead = status.toLowerCase().includes('go ahead');
+  const isApp = category.toLowerCase() === 'application';
+  if(isGoAhead && isApp) {
+    const baseStr = startDateEl.value || new Date().toISOString().split('T')[0];
+    const base = new Date(baseStr);
+    base.setDate(base.getDate() + 16);
+    endDateEl.value = base.toISOString().split('T')[0];
+    toast('✅ End date auto-set: Start Date + 16 days (Application RFC)', 'success');
+  }
+}
+
+function saveNewRFC() {
+  const rfcNum = document.getElementById('new_rfcNum').value.trim();
+  const title = document.getElementById('new_title').value.trim();
+  const requester = document.getElementById('new_requester').value.trim();
+  const status = document.getElementById('new_status').value;
+  const category = document.getElementById('new_category').value;
+  if(!rfcNum || !title || !requester || !status || !category) { toast('Please fill all required fields.', 'error'); return; }
+  if(!/^RFC-\d+$/.test(rfcNum)) { toast('RFC Number format invalid. Use RFC-XXXX', 'error'); return; }
+  if(data.some(r=>r['RFC Number']===rfcNum)) { toast('RFC Number conflict! Use a unique number.', 'error'); return; }
+  // If requester is new, add to dropdowns
+  if(!dropdowns.requesters.includes(requester)) {
+    dropdowns.requesters.push(requester); dropdowns.requesters.sort();
+    populateAllDropdowns(); populateRequesterDatalist();
+  }
+  const rfc = {
+    'RFC Number': rfcNum,
+    'Infra / Application': category,
+    'Change Title': title,
+    'Change Type': document.getElementById('new_changeType').value,
+    'Received Date': document.getElementById('new_receivedDate').value,
+    'Requester Name': requester,
+    'Status': status,
+    'Start Date': document.getElementById('new_startDate').value,
+    'End Date': document.getElementById('new_endDate').value,
+    'VAPT Status': document.getElementById('new_vapt').value,
+    'Approval & Artifacts Received Status': document.getElementById('new_approval').value,
+  };
+  data.unshift(rfc);
+  addAuditEntry(rfc['RFC Number'], 'Created', `RFC created`);
+  updateNavBadges();
+  clearNewRFCForm();
+  toast(`${rfc['RFC Number']} created successfully!`, 'success');
+  // Trigger 7PM daily email reminder setup
+  scheduleEODEmail();
+  navigate('rfcList');
+}
+
+function openRFCModal(idx) {
+  currentEditIdx = idx;
+  const r = data[idx];
+  document.getElementById('rfcModalTitle').textContent = `${r['RFC Number']} — RFC Details`;
+
+  // Details tab
+  document.getElementById('det_rfcNum').textContent = r['RFC Number'];
+  document.getElementById('det_category').innerHTML = catBadge(r['Infra / Application']);
+  document.getElementById('det_changeType').innerHTML = typeBadge(r['Change Type']);
+  document.getElementById('det_requester').textContent = r['Requester Name']||'—';
+  document.getElementById('det_status').innerHTML = statusBadge(r.Status);
+  document.getElementById('det_received').textContent = fmt(r['Received Date']);
+  document.getElementById('det_start').textContent = fmt(r['Start Date']);
+  document.getElementById('det_end').textContent = fmt(r['End Date']);
+  document.getElementById('det_title').textContent = r['Change Title']||'—';
+  document.getElementById('det_vapt').innerHTML = r['VAPT Status'] ? statusBadge(r['VAPT Status']) : '—';
+  document.getElementById('det_approval').innerHTML = r['Approval & Artifacts Received Status'] ? statusBadge(r['Approval & Artifacts Received Status']) : '—';
+
+  // Edit tab
+  document.getElementById('edit_idx').value = idx;
+  document.getElementById('edit_rfcNum').value = r['RFC Number'];
+  document.getElementById('edit_receivedDate').value = fmtISO(r['Received Date']);
+  document.getElementById('edit_title').value = r['Change Title']||'';
+  document.getElementById('edit_startDate').value = fmtISO(r['Start Date']);
+  document.getElementById('edit_endDate').value = fmtISO(r['End Date']);
+  populateAllDropdowns();
+  document.getElementById('edit_category').value = r['Infra / Application']||'';
+  document.getElementById('edit_changeType').value = r['Change Type']||'';
+  document.getElementById('edit_requester').value = r['Requester Name']||'';
+  document.getElementById('edit_status').value = r.Status||'';
+
+  // Audit log
+  renderAuditLog(r['RFC Number']);
+
+  // Switch to details tab
+  switchTab('rfcModalTab','rfcTabDetails');
+  openModal('rfcModal');
+}
+
+function saveEditRFC() {
+  const idx = parseInt(document.getElementById('edit_idx').value);
+  const newRFCNum = document.getElementById('edit_rfcNum').value.trim();
+  if(!/^RFC-\d+$/.test(newRFCNum)) { toast('RFC Number format invalid. Use RFC-XXXX', 'error'); return; }
+  if(data.some((r,i)=>r['RFC Number']===newRFCNum && i!==idx)) { toast('RFC Number conflict with another record!', 'error'); return; }
+  const r = data[idx];
+  const newRequester = document.getElementById('edit_requester').value.trim();
+  // Add requester to dropdown if new
+  if(newRequester && !dropdowns.requesters.includes(newRequester)) {
+    dropdowns.requesters.push(newRequester); dropdowns.requesters.sort();
+    populateAllDropdowns(); populateRequesterDatalist();
+  }
+  r['RFC Number'] = newRFCNum;
+  r['Infra / Application'] = document.getElementById('edit_category').value;
+  r['Change Title'] = document.getElementById('edit_title').value;
+  r['Change Type'] = document.getElementById('edit_changeType').value;
+  r['Received Date'] = document.getElementById('edit_receivedDate').value;
+  r['Requester Name'] = newRequester;
+  r['Status'] = document.getElementById('edit_status').value;
+  r['Start Date'] = document.getElementById('edit_startDate').value;
+  r['End Date'] = document.getElementById('edit_endDate').value;
+  r['VAPT Status'] = document.getElementById('edit_vapt').value;
+  r['Approval & Artifacts Received Status'] = document.getElementById('edit_approval').value;
+  addAuditEntry(r['RFC Number'], 'Updated', `Fields updated`);
+  updateNavBadges();
+  closeModal('rfcModal');
+  toast(`${r['RFC Number']} updated successfully!`, 'success');
+  applyFilters();
+  refreshDashboard();
+}
+
+function deleteRFC() {
+  if(!confirm(`Delete ${data[currentEditIdx]['RFC Number']}? This cannot be undone.`)) return;
+  data.splice(currentEditIdx,1);
+  updateNavBadges();
+  closeModal('rfcModal');
+  toast('RFC deleted.', 'success');
+  applyFilters();
+  refreshDashboard();
+}
+
+function confirmDelete(idx) {
+  if(!confirm(`Delete ${data[idx]['RFC Number']}?`)) return;
+  data.splice(idx,1);
+  updateNavBadges();
+  applyFilters();
+  toast('RFC deleted.', 'success');
+}
+
+// ============================================================
+// AUDIT LOG
+// ============================================================
+function addAuditEntry(rfcNum, action, detail) {
+  if(!auditLog[rfcNum]) auditLog[rfcNum] = [];
+  auditLog[rfcNum].unshift({ time: new Date().toLocaleString('en-IN'), action, detail });
+}
+
+function renderAuditLog(rfcNum) {
+  const el = document.getElementById('rfcAuditLog');
+  const entries = auditLog[rfcNum] || [];
+  if(!entries.length) { el.innerHTML = '<div class="text-muted text-center" style="padding:20px;">No audit log entries yet.</div>'; return; }
+  el.innerHTML = entries.map(e=>`
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-content">
+        <div class="timeline-time">${e.time}</div>
+        <div class="timeline-text"><strong>${e.action}</strong> — ${e.detail}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function refreshDashboard() {
+  const total = data.length;
+  const byStatus = {};
+  const byType = {};
+  data.forEach(r=>{
+    const s = r.Status||'Unknown'; byStatus[s]=(byStatus[s]||0)+1;
+    const t = r['Change Type']||'Unknown'; byType[t]=(byType[t]||0)+1;
+  });
+  const goAhead = data.filter(r=>r.Status?.toLowerCase().includes('go ahead')).length;
+  const pending = data.filter(r=>r.Status?.toLowerCase().includes('cab')||r.Status?.toLowerCase().includes('discuss')).length;
+  const hodWait = data.filter(r=>r.Status?.toLowerCase().includes('hod')||r.Status?.toLowerCase().includes('waiting')).length;
+  const expedite = data.filter(r=>r['Change Type']?.toLowerCase().includes('expedite')||r['Change Type']?.toLowerCase().includes('emergency')).length;
+  const withStart = data.filter(r=>r['Start Date']).length;
+
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi-card" style="--kpi-color:var(--primary);" onclick="kpiFilter('status','')">
+      <div class="kpi-icon">📋</div>
+      <div class="kpi-label">Total RFCs</div>
+      <div class="kpi-value">${total}</div>
+      <div class="kpi-sub">All change requests</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:var(--success);" onclick="kpiFilter('status','go ahead given')">
+      <div class="kpi-icon">✅</div>
+      <div class="kpi-label">Go Ahead Given</div>
+      <div class="kpi-value">${goAhead}</div>
+      <div class="kpi-sub">Approved for deployment</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:var(--info);" onclick="kpiFilter('status','Need to discuss in CAB meeting')">
+      <div class="kpi-icon">🏛</div>
+      <div class="kpi-label">Pending CAB</div>
+      <div class="kpi-value">${pending}</div>
+      <div class="kpi-sub">Awaiting CAB discussion</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:var(--warning);" onclick="kpiFilter('status','Waiting for HOD approval')">
+      <div class="kpi-icon">⏳</div>
+      <div class="kpi-label">Awaiting HOD</div>
+      <div class="kpi-value">${hodWait}</div>
+      <div class="kpi-sub">HOD approval required</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:var(--accent);" onclick="kpiFilter('type','expedite')">
+      <div class="kpi-icon">⚡</div>
+      <div class="kpi-label">Expedite / Emergency</div>
+      <div class="kpi-value">${expedite}</div>
+      <div class="kpi-sub">High priority changes</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#8e44ad;" onclick="kpiFilter('scheduled')">
+      <div class="kpi-icon">📅</div>
+      <div class="kpi-label">Scheduled</div>
+      <div class="kpi-value">${withStart}</div>
+      <div class="kpi-sub">With start dates assigned</div>
+    </div>
+  `;
+
+  // Status chart
+  const sMax = Math.max(...Object.values(byStatus),1);
+  document.getElementById('statusChart').innerHTML = Object.entries(byStatus).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`
+    <div class="mini-bar-row">
+      <div class="mini-bar-label" title="${k}">${k}</div>
+      <div class="mini-bar-track">
+        <div class="mini-bar-fill" style="width:${Math.max(8,v/sMax*100)}%;background:${statusColor(k)};">
+          <span>${v}</span>
+        </div>
+      </div>
+    </div>`).join('');
+
+  // Type chart
+  const tMax = Math.max(...Object.values(byType),1);
+  document.getElementById('typeChart').innerHTML = Object.entries(byType).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`
+    <div class="mini-bar-row">
+      <div class="mini-bar-label" title="${k}">${k}</div>
+      <div class="mini-bar-track">
+        <div class="mini-bar-fill" style="width:${Math.max(8,v/tMax*100)}%;background:${k.toLowerCase().includes('expedite')||k.toLowerCase().includes('emergency')?'#d4a017':'#2471a3'};">
+          <span>${v}</span>
+        </div>
+      </div>
+    </div>`).join('');
+
+  // Pending table
+  const pendingRFCs = data.filter(r=>r.Status?.toLowerCase().includes('cab')||r.Status?.toLowerCase().includes('discuss'));
+  document.getElementById('cabCount').textContent = pendingRFCs.length;
+  document.getElementById('pendingBody').innerHTML = pendingRFCs.slice(0,10).map((r,i)=>{
+    const idx = data.indexOf(r);
+    return `<tr>
+      <td class="rfc-num">${r['RFC Number']}</td>
+      <td><div class="change-title" title="${r['Change Title']}">${r['Change Title']||'—'}</div></td>
+      <td>${typeBadge(r['Change Type'])}</td>
+      <td>${r['Requester Name']||'—'}</td>
+      <td>${catBadge(r['Infra / Application'])}</td>
+      <td style="font-size:12px;">${fmt(r['Received Date'])}</td>
+      <td><button class="btn btn-outline btn-xs" onclick="openRFCModal(${idx})">View</button></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🎉</div><p>No items pending CAB discussion.</p></div></td></tr>';
+}
+
+function statusColor(s) {
+  if(!s) return '#6b7a99';
+  const l = s.toLowerCase();
+  if(l.includes('go ahead')||l.includes('approved')||l.includes('completed')) return '#1e8449';
+  if(l.includes('cab')||l.includes('discuss')||l.includes('in progress')) return '#2471a3';
+  if(l.includes('hod')||l.includes('waiting')||l.includes('pending')) return '#e67e22';
+  if(l.includes('reject')||l.includes('fail')) return '#c0392b';
+  return '#6b7a99';
+}
+
+function setFilterAndGo(status) {
+  navigate('rfcList');
+  setTimeout(()=>{
+    clearFilters();
+    document.getElementById('filterStatus').value = status;
+    applyFilters();
+  }, 50);
+}
+
+function kpiFilter(mode, value) {
+  navigate('rfcList');
+  setTimeout(()=>{
+    clearFilters();
+    if(mode === 'status') {
+      if(value === '') {
+        // Show all records — just navigate with no filter
+        applyFilters();
+      } else {
+        document.getElementById('filterStatus').value = value;
+        applyFilters();
+      }
+    } else if(mode === 'type') {
+      // Try exact dropdown match first
+      const sel = document.getElementById('filterType');
+      const exactMatch = dropdowns.changeTypes.find(t => t.toLowerCase().includes(value.toLowerCase()));
+      if(exactMatch && sel) {
+        sel.value = exactMatch;
+        applyFilters();
+      } else {
+        // Manual filter: any Change Type containing the keyword
+        filteredData = data.filter(r => (r['Change Type']||'').toLowerCase().includes(value.toLowerCase()));
+        sortFilteredData();
+        currentPage = 1;
+        renderRFCTable();
+        const fc = document.getElementById('filterCount');
+        if(fc) fc.textContent = filteredData.length + ' of ' + data.length + ' records (Expedite / Emergency)';
+      }
+    } else if(mode === 'scheduled') {
+      filteredData = data.filter(r => {
+        const sd = r['Start Date'];
+        return sd && String(sd).trim() !== '' && String(sd) !== 'NaT' && String(sd) !== 'Invalid Date';
+      });
+      sortFilteredData();
+      currentPage = 1;
+      renderRFCTable();
+      const fc = document.getElementById('filterCount');
+      if(fc) fc.textContent = filteredData.length + ' of ' + data.length + ' records (Scheduled — with Start Date)';
+    }
+  }, 50);
+}
+
+function updateNavBadges() {
+  document.getElementById('nav-badge-rfc').textContent = data.length;
+  const cab = data.filter(r=>r.Status?.toLowerCase().includes('cab')||r.Status?.toLowerCase().includes('discuss')).length;
+  document.getElementById('nav-badge-cab').textContent = cab;
+}
+
+// ============================================================
+// CAB TABLE
+// ============================================================
+function renderCABTable() {
+  const cabRFCs = data.filter(r=>r.Status?.toLowerCase().includes('cab')||r.Status?.toLowerCase().includes('discuss'));
+  const tbody = document.getElementById('cabBody');
+  if(!cabRFCs.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🎉</div><p>No items pending CAB discussion!</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = cabRFCs.map((r,i)=>{
+    const idx = data.indexOf(r);
+    return `<tr>
+      <td><input type="checkbox" class="cab-check" data-idx="${idx}"></td>
+      <td class="rfc-num">${r['RFC Number']}</td>
+      <td><div class="change-title" title="${r['Change Title']}">${r['Change Title']||'—'}</div></td>
+      <td>${catBadge(r['Infra / Application'])}</td>
+      <td>${typeBadge(r['Change Type'])}</td>
+      <td>${r['Requester Name']||'—'}</td>
+      <td style="font-size:12px;">${fmt(r['Received Date'])}</td>
+      <td>
+        <select class="form-control" style="font-size:12px;padding:4px 8px;" onchange="quickDecision(${idx},this.value)">
+          <option value="">-- Decision --</option>
+          ${dropdowns.statuses.map(s=>`<option value="${s}">${s}</option>`).join('')}
+        </select>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function quickDecision(idx, status) {
+  if(!status) return;
+  data[idx].Status = status;
+  addAuditEntry(data[idx]['RFC Number'], 'CAB Decision', `Status → ${status}`);
+  updateNavBadges();
+  toast(`${data[idx]['RFC Number']} → ${status}`, 'success');
+  setTimeout(renderCABTable, 500);
+}
+
+function toggleCABSelectAll(cb) {
+  document.querySelectorAll('.cab-check').forEach(c=>c.checked=cb.checked);
+}
+
+function openBulkDecision() {
+  const selected = [...document.querySelectorAll('.cab-check:checked')];
+  if(!selected.length) { toast('Please select at least one RFC.', 'error'); return; }
+  populateSelect('bulk_status', dropdowns.statuses);
+  openModal('bulkModal');
+}
+
+function applyBulkDecision() {
+  const status = document.getElementById('bulk_status').value;
+  const sd = document.getElementById('bulk_startDate').value;
+  const ed = document.getElementById('bulk_endDate').value;
+  if(!status) { toast('Please select a status.', 'error'); return; }
+  let count = 0;
+  document.querySelectorAll('.cab-check:checked').forEach(cb=>{
+    const idx = parseInt(cb.dataset.idx);
+    data[idx].Status = status;
+    if(sd) data[idx]['Start Date'] = sd;
+    if(ed) data[idx]['End Date'] = ed;
+    addAuditEntry(data[idx]['RFC Number'],'Bulk CAB Decision',`Status → ${status}`);
+    count++;
+  });
+  updateNavBadges();
+  closeModal('bulkModal');
+  toast(`${count} RFCs updated to "${status}"`, 'success');
+  renderCABTable();
+}
+
+function exportCABReport() {
+  const cabRFCs = data.filter(r=>r.Status?.toLowerCase().includes('cab')||r.Status?.toLowerCase().includes('discuss'));
+  if(!cabRFCs.length) { toast('No CAB items to export.', 'error'); return; }
+  const ws = XLSX.utils.json_to_sheet(cabRFCs);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'CAB Agenda');
+  XLSX.writeFile(wb, `CAB_Meeting_${new Date().toISOString().split('T')[0]}.xlsx`);
+  toast('CAB report exported!', 'success');
+}
+
+// ============================================================
+// ANALYTICS
+// ============================================================
+function renderAnalytics() {
+  const byRequester = {};
+  const byCategory = {};
+  const byVAPT = {};
+  const byApproval = {};
+  data.forEach(r=>{
+    const rq = r['Requester Name']||'Unknown'; byRequester[rq]=(byRequester[rq]||0)+1;
+    const ca = r['Infra / Application']||'Unknown'; byCategory[ca]=(byCategory[ca]||0)+1;
+    const vt = r['VAPT Status']||'Not Set'; byVAPT[vt]=(byVAPT[vt]||0)+1;
+    const ap = r['Approval & Artifacts Received Status']||'Not Set'; byApproval[ap]=(byApproval[ap]||0)+1;
+  });
+  renderMiniBar('requesterChart', byRequester, '#1a3a6b');
+  renderMiniBar('categoryChart', byCategory, '#2471a3');
+  renderMiniBar('vaptChart', byVAPT, '#1e8449');
+  renderMiniBar('approvalChart', byApproval, '#e67e22');
+
+  // Timeline
+  const recent = data.slice(0,20);
+  document.getElementById('activityTimeline').innerHTML = recent.map(r=>`
+    <div class="timeline-item">
+      <div class="timeline-dot" style="background:${statusColor(r.Status)};box-shadow:0 0 0 2px ${statusColor(r.Status)};"></div>
+      <div class="timeline-content">
+        <div class="timeline-time">${fmt(r['Received Date'])} · ${r['Requester Name']||'Unknown'} · ${catBadge(r['Infra / Application'])}</div>
+        <div class="timeline-text"><strong>${r['RFC Number']}</strong> — ${r['Change Title']||'—'}</div>
+        <div style="margin-top:6px;">${statusBadge(r.Status)} ${typeBadge(r['Change Type'])}</div>
+      </div>
+    </div>`).join('') || '<div class="empty-state"><div class="empty-icon">📭</div><p>No recent activity.</p></div>';
+}
+
+function renderMiniBar(id, data, color) {
+  const max = Math.max(...Object.values(data),1);
+  const sorted = Object.entries(data).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  document.getElementById(id).innerHTML = sorted.map(([k,v])=>`
+    <div class="mini-bar-row">
+      <div class="mini-bar-label" title="${k}">${k}</div>
+      <div class="mini-bar-track">
+        <div class="mini-bar-fill" style="width:${Math.max(10,v/max*100)}%;background:${color};">
+          <span>${v}</span>
+        </div>
+      </div>
+      <div class="mini-bar-count">${v}</div>
+    </div>`).join('') || '<div class="text-muted">No data</div>';
+}
+
+// ============================================================
+// REPORTING / EMAIL
+// ============================================================
+function buildEmailPreview() {
+  const type = document.getElementById('rpt_type').value;
+  const toGroup = document.getElementById('rpt_to').value;
+  const toEmail = document.getElementById('rpt_toEmail').value;
+  const cc = document.getElementById('rpt_cc').value;
+  const statusFilter = document.getElementById('rpt_statusFilter').value;
+  const notes = document.getElementById('rpt_notes').value;
+  const fromDate = document.getElementById('rpt_from').value;
+  const toDate = document.getElementById('rpt_to_date').value;
+
+  // Resolve email to
+  let resolvedTo = toEmail || '';
+  if(toGroup && !toEmail) {
+    const groupEmails = stakeholders.filter(s=>{
+      if(toGroup==='management') return s.role==='Senior Management';
+      if(toGroup==='cab') return s.role==='CAB Member';
+      if(toGroup==='it') return s.role==='IT Team';
+      return true;
+    }).map(s=>`${s.name} <${s.email}>`).join('; ');
+    resolvedTo = groupEmails;
+  }
+
+  document.getElementById('emailTo').textContent = resolvedTo || '(select recipient)';
+  document.getElementById('emailCC').textContent = cc || 'change.management@jainam.in';
+
+  let filtered = data;
+  if(statusFilter) filtered = filtered.filter(r=>r.Status===statusFilter);
+  if(fromDate) filtered = filtered.filter(r=>r['Received Date']>=fromDate);
+  if(toDate) filtered = filtered.filter(r=>r['Received Date']<=toDate);
+
+  const now = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
+  let subject = '', body = '';
+
+  if(type==='cab') {
+    const cabRFCs = filtered.filter(r=>r.Status?.toLowerCase().includes('cab')||r.Status?.toLowerCase().includes('discuss'));
+    subject = `CAB Meeting Agenda — ${now} | Jainam Broking Limited`;
+    body = `Dear CAB Members,\n\nPlease find below the agenda for the upcoming Change Advisory Board (CAB) meeting.\n\nMeeting Date: ${now}\nOrganization: Jainam Broking Limited\nTotal Items for Discussion: ${cabRFCs.length}\n\n${'─'.repeat(60)}\nCAB AGENDA ITEMS\n${'─'.repeat(60)}\n\n` +
+      cabRFCs.map((r,i)=>`${i+1}. ${r['RFC Number']} | ${r['Change Type']}\n   Title    : ${r['Change Title']}\n   Category : ${r['Infra / Application']}\n   Requester: ${r['Requester Name']}\n   Received : ${fmt(r['Received Date'])}\n   Status   : ${r.Status}\n`).join('\n') +
+      `\n${'─'.repeat(60)}\n\nSummary:\n  • Total Pending for CAB: ${cabRFCs.length}\n  • Normal Changes: ${cabRFCs.filter(r=>r['Change Type']==='Normal Change').length}\n  • Expedite Changes: ${cabRFCs.filter(r=>r['Change Type']==='Expedite Change').length}\n` +
+      (notes ? `\nAdditional Notes:\n${notes}\n` : '') +
+      `\nKindly review the items prior to the meeting and prepare your inputs accordingly.\n\nRegards,\nChange Management Team\nJainam Broking Limited\nchange.management@jainam.in`;
+  } else if(type==='status') {
+    subject = `RFC Status Update — ${now} | Jainam Broking Limited`;
+    const grouped = {};
+    filtered.forEach(r=>{ const s=r.Status||'Unknown'; if(!grouped[s])grouped[s]=[]; grouped[s].push(r); });
+    body = `Dear Team,\n\nPlease find below the current status of all active change requests as of ${now}.\n\nOrganization: Jainam Broking Limited\nTotal RFCs: ${filtered.length}\n\n${'─'.repeat(60)}\nRFC STATUS SUMMARY\n${'─'.repeat(60)}\n\n`;
+    Object.entries(grouped).forEach(([status, rfcs])=>{
+      body += `[${status.toUpperCase()}] — ${rfcs.length} items\n`;
+      rfcs.slice(0,8).forEach(r=>{ body += `  • ${r['RFC Number']} | ${r['Requester Name']} | ${r['Change Title'].substring(0,60)}${r['Change Title'].length>60?'…':''}\n`; });
+      if(rfcs.length>8) body += `  ... and ${rfcs.length-8} more\n`;
+      body += '\n';
+    });
+    body += (notes ? `Additional Notes:\n${notes}\n\n` : '') + `Regards,\nChange Management Team\nJainam Broking Limited`;
+  } else if(type==='pending') {
+    const pendingRFCs = filtered.filter(r=>r.Status?.toLowerCase().includes('waiting')||r.Status?.toLowerCase().includes('hod')||r.Status?.toLowerCase().includes('pending'));
+    subject = `Action Required: Pending Approvals — ${now} | Jainam Broking Limited`;
+    body = `Dear Management,\n\nThis is a reminder that the following change requests are currently awaiting your approval.\n\nDate: ${now}\nTotal Pending: ${pendingRFCs.length}\n\n${'─'.repeat(60)}\nPENDING APPROVALS\n${'─'.repeat(60)}\n\n` +
+      pendingRFCs.map((r,i)=>`${i+1}. ${r['RFC Number']}\n   Title    : ${r['Change Title']}\n   Category : ${r['Infra / Application']} | ${r['Change Type']}\n   Requester: ${r['Requester Name']}\n   Received : ${fmt(r['Received Date'])}\n   Status   : ${r.Status}\n   Approval : ${r['Approval & Artifacts Received Status']||'—'}\n`).join('\n') +
+      `\n${'─'.repeat(60)}\n\nKindly take the necessary action at the earliest to avoid delays in deployment.\n` +
+      (notes ? `\nNotes: ${notes}\n` : '') +
+      `\nRegards,\nChange Management Team\nJainam Broking Limited`;
+  } else if(type==='weekly') {
+    subject = `Weekly Change Management Summary — Week of ${now} | Jainam Broking Limited`;
+    const approved = filtered.filter(r=>r.Status?.toLowerCase().includes('go ahead')||r.Status?.toLowerCase().includes('approved')).length;
+    const pendCount = filtered.filter(r=>r.Status?.toLowerCase().includes('cab')||r.Status?.toLowerCase().includes('discuss')).length;
+    const hodCount = filtered.filter(r=>r.Status?.toLowerCase().includes('hod')||r.Status?.toLowerCase().includes('waiting')).length;
+    body = `Dear Management,\n\nPlease find the weekly change management summary for Jainam Broking Limited.\n\nPeriod : ${fromDate||'Start'} to ${toDate||now}\nPrepared by: Change Management Team\n\n${'─'.repeat(60)}\nWEEKLY SUMMARY\n${'─'.repeat(60)}\n\n  Total RFCs     : ${filtered.length}\n  Approved       : ${approved}\n  Pending CAB    : ${pendCount}\n  Awaiting HOD   : ${hodCount}\n  Expedite       : ${filtered.filter(r=>r['Change Type']?.toLowerCase().includes('expedite')).length}\n  Normal Changes : ${filtered.filter(r=>r['Change Type']==='Normal Change').length}\n\n${'─'.repeat(60)}\nBY CATEGORY\n${'─'.repeat(60)}\n\n` +
+      Object.entries(filtered.reduce((acc,r)=>{ acc[r['Infra / Application']||'Unknown']=(acc[r['Infra / Application']||'Unknown']||0)+1; return acc; },{})).map(([k,v])=>`  ${k.padEnd(20)} : ${v}`).join('\n') +
+      `\n\n${'─'.repeat(60)}\nRECENT ACTIVITY (Last 5 RFCs)\n${'─'.repeat(60)}\n\n` +
+      filtered.slice(0,5).map((r,i)=>`${i+1}. ${r['RFC Number']} | ${r['Requester Name']} | ${r['Status']}\n   ${r['Change Title'].substring(0,80)}`).join('\n\n') +
+      (notes ? `\n\nNotes:\n${notes}` : '') +
+      `\n\nRegards,\nChange Management Team\nJainam Broking Limited`;
+  } else if(type==='hod') {
+    const expedite = filtered.filter(r=>r['Change Type']?.toLowerCase().includes('expedite')||r['Change Type']?.toLowerCase().includes('emergency'));
+    subject = `HOD Approval Required — Expedite/Emergency Changes — ${now}`;
+    body = `Dear HOD,\n\nThe following expedite / emergency change requests require your immediate approval.\n\nDate: ${now}\nTotal Items: ${expedite.length}\n\n${'─'.repeat(60)}\n`;
+    expedite.forEach((r,i)=>{
+      body += `\n${i+1}. ${r['RFC Number']} — ${r['Change Type'].toUpperCase()}\n   Title    : ${r['Change Title']}\n   Category : ${r['Infra / Application']}\n   Requester: ${r['Requester Name']}\n   Received : ${fmt(r['Received Date'])}\n   Status   : ${r.Status}\n   VAPT     : ${r['VAPT Status']||'—'}\n`;
+    });
+    body += `\n${'─'.repeat(60)}\n\nPlease review and provide your approval/rejection at the earliest. Kindly share the signed approval document along with any artifacts required.\n` +
+      (notes ? `\nAdditional Notes:\n${notes}\n` : '') +
+      `\nFor any queries, please reach out to the Change Management Team.\n\nRegards,\nChange Management Team\nJainam Broking Limited\nchange.management@jainam.in`;
+  }
+
+  document.getElementById('emailSubject').textContent = subject;
+  document.getElementById('emailPreview').textContent = body;
+}
+
+function copyEmail() {
+  const subject = document.getElementById('emailSubject').textContent;
+  const body = document.getElementById('emailPreview').textContent;
+  const to = document.getElementById('emailTo').textContent;
+  const full = `To: ${to}\nSubject: ${subject}\n\n${body}`;
+  navigator.clipboard.writeText(full).then(()=>toast('Email copied to clipboard!','success')).catch(()=>{
+    const ta = document.createElement('textarea');
+    ta.value = full; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+    toast('Copied!','success');
+  });
+}
+
+function printEmail() { window.print(); }
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function renderDropdownList(listId, key) {
+  const ul = document.getElementById(listId);
+  if(!ul) return;
+  ul.innerHTML = dropdowns[key].map((item,i)=>`
+    <li>
+      <span class="item-name">${item}</span>
+      <div class="item-actions">
+        <button class="btn btn-outline btn-xs" onclick="editDropdownItem('${key}',${i})">✏️</button>
+        <button class="btn btn-danger btn-xs" onclick="removeDropdownItem('${key}',${i})">✕</button>
+      </div>
+    </li>`).join('');
+}
+
+function renderAllSettings() {
+  renderDropdownList('statusesList','statuses');
+  renderDropdownList('changeTypesList','changeTypes');
+  renderDropdownList('categoriesList','categories');
+  renderDropdownList('requestersList','requesters');
+  renderDropdownList('vaptStatusesList','vaptStatuses');
+  renderDropdownList('approvalStatusesList','approvalStatuses');
+  renderStakeholdersList();
+}
+
+function addDropdownItem(key, inputId) {
+  const val = document.getElementById(inputId).value.trim();
+  if(!val) { toast('Please enter a value.', 'error'); return; }
+  if(dropdowns[key].includes(val)) { toast('Item already exists.', 'error'); return; }
+  dropdowns[key].push(val);
+  dropdowns[key].sort();
+  document.getElementById(inputId).value = '';
+  renderAllSettings();
+  populateAllDropdowns();
+  populateFilterDropdowns();
+  toast(`"${val}" added!`, 'success');
+}
+
+function removeDropdownItem(key, idx) {
+  if(!confirm('Remove this item?')) return;
+  dropdowns[key].splice(idx,1);
+  renderAllSettings();
+  populateAllDropdowns();
+  populateFilterDropdowns();
+}
+
+function editDropdownItem(key, idx) {
+  const newVal = prompt('Edit item:', dropdowns[key][idx]);
+  if(!newVal || !newVal.trim()) return;
+  dropdowns[key][idx] = newVal.trim();
+  dropdowns[key].sort();
+  renderAllSettings();
+  populateAllDropdowns();
+  populateFilterDropdowns();
+}
+
+function addStakeholder() {
+  const name = document.getElementById('addStakeholderName').value.trim();
+  const email = document.getElementById('addStakeholderEmail').value.trim();
+  const role = document.getElementById('addStakeholderRole').value;
+  if(!name || !email) { toast('Name and email required.', 'error'); return; }
+  stakeholders.push({name, email, role});
+  document.getElementById('addStakeholderName').value = '';
+  document.getElementById('addStakeholderEmail').value = '';
+  renderStakeholdersList();
+  toast(`${name} added to directory!`, 'success');
+}
+
+function renderStakeholdersList() {
+  const ul = document.getElementById('stakeholdersList');
+  if(!ul) return;
+  ul.innerHTML = stakeholders.map((s,i)=>`
+    <li>
+      <div>
+        <div class="item-name">${s.name}</div>
+        <div style="font-size:12px;color:var(--text-muted);">${s.email} · <span class="badge badge-blue" style="font-size:10px;">${s.role}</span></div>
+      </div>
+      <div class="item-actions">
+        <button class="btn btn-danger btn-xs" onclick="removeStakeholder(${i})">✕</button>
+      </div>
+    </li>`).join('');
+}
+
+function removeStakeholder(i) {
+  if(!confirm('Remove stakeholder?')) return;
+  stakeholders.splice(i,1);
+  renderStakeholdersList();
+}
+
+// ============================================================
+// 7 PM DAILY EMAIL SCHEDULER
+// ============================================================
+let eodTimerHandle = null;
+let cmEmail = 'change.management@jainam.in'; // configurable from settings
+
+function scheduleEODEmail() {
+  if(eodTimerHandle) clearTimeout(eodTimerHandle);
+  const now = new Date();
+  const target = new Date();
+  target.setHours(19, 0, 0, 0); // 7:00 PM
+  if(target <= now) target.setDate(target.getDate() + 1); // next day if past 7 PM
+  const msUntil = target - now;
+  const hh = Math.floor(msUntil/3600000), mm = Math.floor((msUntil%3600000)/60000);
+  eodTimerHandle = setTimeout(triggerEODEmail, msUntil);
+  updateEODStatus(`⏰ Daily CM Report scheduled at 7:00 PM (in ${hh}h ${mm}m)`);
+}
+
+function triggerEODEmail() {
+  buildEODEmailBody();
+  openModal('eodModal');
+  // Reschedule for next day
+  scheduleEODEmail();
+}
+
+function buildEODEmailBody() {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-IN',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  const todayISO = now.toISOString().split('T')[0];
+  const todayRFCs = data.filter(r => {
+    const rd = fmtISO(r['Received Date']);
+    return rd === todayISO;
+  });
+  const allGoAhead = data.filter(r=>r.Status?.toLowerCase().includes('go ahead'));
+  const allPending = data.filter(r=>r.Status?.toLowerCase().includes('cab')||r.Status?.toLowerCase().includes('discuss'));
+  const allHOD = data.filter(r=>r.Status?.toLowerCase().includes('hod')||r.Status?.toLowerCase().includes('waiting'));
+
+  const subject = `[CM Daily Report] RFC Status Update — ${dateStr} | Jainam Broking Limited`;
+  const body = `Dear Change Management Team,\n\nPlease find the daily RFC status report as of 7:00 PM on ${dateStr}.\n\n${'═'.repeat(65)}\n📊 DAILY SUMMARY — JAINAM CHANGE MANAGEMENT PORTAL\n${'═'.repeat(65)}\n\n  Total RFCs in System     : ${data.length}\n  New RFCs Today           : ${todayRFCs.length}\n  Go Ahead Given           : ${allGoAhead.length}\n  Pending CAB Discussion   : ${allPending.length}\n  Awaiting HOD Approval    : ${allHOD.length}\n\n${'─'.repeat(65)}\n📋 NEW RFCs RECEIVED TODAY (${todayRFCs.length})\n${'─'.repeat(65)}\n` +
+    (todayRFCs.length ? todayRFCs.map((r,i)=>`\n${i+1}. ${r['RFC Number']} | ${r['Change Type']} | ${r['Infra / Application']}\n   Title     : ${r['Change Title']}\n   Requester : ${r['Requester Name']}\n   Status    : ${r.Status}\n   End Date  : ${fmt(r['End Date'])}`).join('\n') : '\n   No new RFCs received today.\n') +
+    `\n\n${'─'.repeat(65)}\n⏳ PENDING CAB DISCUSSION (${allPending.length})\n${'─'.repeat(65)}\n` +
+    (allPending.length ? allPending.slice(0,10).map((r,i)=>`\n${i+1}. ${r['RFC Number']} | ${r['Requester Name']}\n   ${r['Change Title'].substring(0,70)}`).join('\n') : '\n   None pending.\n') +
+    `\n\n${'─'.repeat(65)}\n🔶 AWAITING HOD APPROVAL (${allHOD.length})\n${'─'.repeat(65)}\n` +
+    (allHOD.length ? allHOD.map((r,i)=>`\n${i+1}. ${r['RFC Number']} — ${r['Change Title'].substring(0,60)}\n   Approval Status: ${r['Approval & Artifacts Received Status']||'—'}`).join('\n') : '\n   None pending.\n') +
+    `\n\n${'═'.repeat(65)}\n\nThis is an automated daily report generated by the Jainam Change Management Portal at 7:00 PM.\n\nRegards,\nChange Management System\nJainam Broking Limited`;
+
+  document.getElementById('eodSubject').textContent = subject;
+  document.getElementById('eodBody').textContent = body;
+  document.getElementById('eodTo').textContent = cmEmail;
+}
+
+function copyEODEmail() {
+  const sub = document.getElementById('eodSubject').textContent;
+  const body = document.getElementById('eodBody').textContent;
+  const to = document.getElementById('eodTo').textContent;
+  const full = `To: ${to}\nSubject: ${sub}\n\n${body}`;
+  navigator.clipboard.writeText(full).then(()=>toast('Daily report copied!','success')).catch(()=>{
+    const ta=document.createElement('textarea'); ta.value=full; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast('Copied!','success');
+  });
+}
+
+function sendEODNow() {
+  buildEODEmailBody();
+  openModal('eodModal');
+}
+
+function updateEODStatus(msg) {
+  const el = document.getElementById('eodStatus');
+  const el2 = document.getElementById('eodStatus2');
+  if(el) el.textContent = msg;
+  if(el2) el2.textContent = msg;
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function printPage() { window.print(); }
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.getElementById('hdr-date').textContent = new Date().toLocaleDateString('en-IN',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+  clearNewRFCForm();
+  populateAllDropdowns();
+  populateFilterDropdowns();
+  populateRptFilters();
+  populateRequesterDatalist();
+  refreshDashboard();
+  updateNavBadges();
+  scheduleEODEmail();
+  document.getElementById('cmEmailInput').value = cmEmail;
+
+  // Restore OneDrive URL from localStorage
+  const savedURL = localStorage.getItem('jcm_onedrive_url') || 'https://jainamin-my.sharepoint.com/:x:/g/personal/ankur_sharma_jainam_in/IQDkFZMJ2WuESouYEo3FLLsMAZVHIiNrol51JIwJr2JN6kM?rtime=puC0TazK3kg';
+  if(savedURL) {
+    oneDriveURL = savedURL;
+    const urlField = document.getElementById('settings_onedrive_url');
+    if(urlField) urlField.value = savedURL;
+    localStorage.setItem('jcm_onedrive_url', savedURL);
+  }
+
+  // Restore auto-sync setting
+  const savedSync = localStorage.getItem('jcm_autosync') || '0';
+  const syncSel = document.getElementById('settings_autosync');
+  if(syncSel) syncSel.value = savedSync;
+  if(parseInt(savedSync) > 0) startAutoSync(parseInt(savedSync));
+
+  // Show last sync time
+  const ls = localStorage.getItem('jcm_last_sync') || '';
+  const lsd = document.getElementById('lastSyncDisplay');
+  if(lsd && ls) lsd.textContent = ls;
+
+  // Populate syncHelpModal URL
+  const helpLink = document.getElementById('syncHelpURL');
+  if(helpLink && oneDriveURL) { helpLink.href = oneDriveURL; helpLink.textContent = oneDriveURL.substring(0,80)+'…'; }
+
+  // Auto-sync from OneDrive on startup (silent — fallback to cache if fails)
+  setSyncStatus('Auto-syncing…', 'rgba(255,255,255,0.45)');
+  syncFromOneDrive(true).catch(()=>{}).finally(()=>{
+    // If data still empty after sync attempt, load cache
+    setTimeout(()=>{ if(!data.length) loadCachedData(); }, 6000);
+  });
+});
+</script>
+</body>
+</html>
